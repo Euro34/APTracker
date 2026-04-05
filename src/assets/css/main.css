@@ -1,0 +1,83 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+
+/*-------------------------------------
+Color Palette & Font Size
+--------------------------------------*/
+:root {
+	--text-color: #d3d3d3;
+	--accent1-color:  #5baa61;
+	--accent2-color: #5a9e72;
+	--primary-color: #465346;
+	--secondary-color: #2f3d2f;
+	--primary-background-color: #161e17;
+	--secondary-background-color: #1f2820;
+
+	--text-xl: 1.875rem;
+	--text-l: 1.5rem;
+	--text-m: 1.25rem;
+	--text-s: 1.125rem;
+	--text-xs: 1rem;
+	--text-xxs: 0.938rem;
+}
+
+/*-------------------------------------
+Default code
+--------------------------------------*/
+* {
+    margin: 0;
+    padding: 0;
+}
+
+* {
+	box-sizing:border-box;
+	-webkit-box-sizing:border-box;
+	-moz-box-sizing:border-box;
+	-o-box-sizing:border-box;
+	-ms-box-sizing:border-box;
+}
+
+* {
+	color: var(--text-color);
+	font-family: 'Quicksand', sans-serif;
+}
+
+/*-------------------------------------
+body
+--------------------------------------*/
+body {
+	background-color: var(--primary-background-color);
+}
+
+section {
+	display: flex;
+    flex-direction: column;
+    align-items: center;
+	padding-top: 90px;
+	padding-bottom: 25px;
+	gap: 30px;
+}
+
+/*-------------------------------------
+heading and text
+--------------------------------------*/
+h1 {
+	font-size: var(--text-xl);
+}
+
+h2 {
+	font-size: var(--text-l);
+}
+
+h3 {
+	font-size: var(--text-m);
+}
+
+p {
+	font-size: var(--text-s);
+}
+
+a {
+    color: var(--text-color);
+    font-size: var(--text-s);
+    text-decoration: none;
+}

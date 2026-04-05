@@ -1,0 +1,47 @@
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 20px;
+    background-color: var(--primary-color);
+}
+
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+#logo {
+    width: 40px;
+    height: 40px;
+}
+
+#app-name {
+    color: var(--text-color);
+    font-size: var(--text-xl);
+}
+
+.toolbar-right {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 30px;
+}
+
+.toolbar-right button {
+    display: flex;
+    align-items: center;
+    border: none;
+    background-color: transparent;
+    color: var(--text-color);
+    font-size: var(--text-s);
+    cursor: pointer;
+    padding: 10px;
+}
+
+.toolbar-right button img{
+    width: 30px;
+    height: 30px;
+    filter: invert(90%)
+}
