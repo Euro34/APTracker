@@ -18,8 +18,8 @@
 
         <!-- Title -->
         <title>AP Tracker</title>
-      <script type="module" crossorigin src="/APTracker/assets/index-Bd_dTCO5.js"></script>
-      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-ziEL2jwQ.css">
+      <script type="module" crossorigin src="/APTracker/assets/index-CaXUhO9P.js"></script>
+      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-_RWwX_FS.css">
     </head>
     <body>
         <div class="toolbar">
@@ -33,7 +33,179 @@
                 <button id="import"><img id="import-icon" src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='utf-8'?%3e%3c!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3e%3csvg%20fill='%23000000'%20width='800px'%20height='800px'%20viewBox='0%200%2024%2024'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M21,14a1,1,0,0,0-1,1v4a1,1,0,0,1-1,1H5a1,1,0,0,1-1-1V15a1,1,0,0,0-2,0v4a3,3,0,0,0,3,3H19a3,3,0,0,0,3-3V15A1,1,0,0,0,21,14Zm-9.71,1.71a1,1,0,0,0,.33.21.94.94,0,0,0,.76,0,1,1,0,0,0,.33-.21l4-4a1,1,0,0,0-1.42-1.42L13,12.59V3a1,1,0,0,0-2,0v9.59l-2.29-2.3a1,1,0,1,0-1.42,1.42Z'/%3e%3c/svg%3e" alt="Import"></button>
             </div>
         </div>
-        <div class="workflow">
+        <div class="main">
+            <div class="workflow">
+                <h2 class="workflow-label">Workflow</h2>
+                <div class="step done" id="Upload">
+                    <div class="step-num">1</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Upload videos</h4>
+                        <p class="step-desc">Upload 2 videos from different perspective</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step inprogress" id="Sync">
+                    <div class="step-num">2</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Sync & trim</h4>
+                        <p class="step-desc">Sync and trim both video to the same time</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step" id="RefDim">
+                    <div class="step-num">3</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Reference object dimensions</h4>
+                        <p class="step-desc">Insert reference object dimensions</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step" id="RefCorner">
+                    <div class="step-num">4</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Mark reference corners</h4>
+                        <p class="step-desc">Mark all visible corners of the reference object</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step" id="TargetObj">
+                    <div class="step-num">5</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Mark target object</h4>
+                        <p class="step-desc">Mark target in every frame</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step" id="Calculate">
+                    <div class="step-num">6</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Calculate</h4>
+                        <p class="step-desc">Calculate object positions</p>
+                    </div>
+                </div>
+                <div class="connector"></div>
+                <div class="step" id="Visualization">
+                    <div class="step-num">7</div>
+                    <div class="step-text">
+                        <h4 class="step-title">Visualization</h4>
+                        <p class="step-desc">3D visualization of the data</p>
+                    </div>
+                </div>
+                <div class="progress">
+                    <p>Progression</p>
+                    <div class="progress-label">1/7</div>
+                    <div class="progress-bar" style="--level: 14%">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-container">
+                <div class="card done" id="Upload">
+                    <div class="card-header">
+                        <div class="left">
+                            <div class="card-number">1</div>
+                            <h3 class="card-title">Upload videos</h3>
+                        </div>
+                        <div class="right">
+                            <p>MP4, MOV, AVI supported</p>
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        
+                    </div>
+                </div>
+                <div class="card inprogress" id="Upload">
+                    <div class="card-header">
+                        <div class="left">
+                            <div class="card-number">2</div>
+                            <h3 class="card-title">Sync & trim</h3>
+                        </div>
+                        <div class="right">
+
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        
+                    </div>
+                </div>
+                <div class="card" id="Upload">
+                    <div class="card-header">
+                        <div class="left">
+                            <div class="card-number">3</div>
+                            <h3 class="card-title">Reference object dimensions</h3>
+                        </div>
+                        <div class="right">
+
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        
+                    </div>
+                </div>
+                <div class="card" id="Upload">
+                    <div class="card-header">
+                        <div class="left">
+                            <div class="card-number">4</div>
+                            <h3 class="card-title">Mark reference object corners</h3>
+                        </div>
+                        <div class="right">
+
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        
+                    </div>
+                </div>
+                <div class="card" id="Upload">
+                    <div class="card-header">
+                        <div class="left">
+                            <div class="card-number">5</div>
+                            <h3 class="card-title">Mark target object</h3>
+                        </div>
+                        <div class="right">
+
+                        </div>
+                    </div>
+                    <div class="card-content">
+                        
+                    </div>
+                </div>
+                <div class="card final">
+                    <h4>Readiness Check</h4>
+                    <div class="statuses">
+                        <div class="item done">
+                            <div class="dot"></div>
+                            <p>Upload videos</p>
+                        </div>
+                        <div class="item inprogress">
+                            <div class="dot"></div>
+                            <p>Sync & trim</p>
+                        </div>
+                        <div class="item">
+                            <div class="dot"></div>
+                            <p>Reference object dimensions</p>
+                        </div>
+                        <div class="item">
+                            <div class="dot"></div>
+                            <p>Mark reference object corners</p>
+                        </div>
+                        <div class="item">
+                            <div class="dot"></div>
+                            <p>Mark target object</p>
+                        </div>
+                    </div>
+                    <div class="container">
+                        <div class="button-cluster">
+                            <button id="calculate">Calculate</button>
+                            <button id="export"><img src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='utf-8'?%3e%3c!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3e%3csvg%20fill='%23000000'%20width='800px'%20height='800px'%20viewBox='0%200%2024%2024'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M4,20H20a1,1,0,0,1,0,2H4a1,1,0,0,1,0-2ZM12,2a1,1,0,0,0-1,1V14.586L8.707,12.293a1,1,0,1,0-1.414,1.414l4,4a1,1,0,0,0,.325.216.986.986,0,0,0,.764,0,1,1,0,0,0,.325-.216l4-4a1,1,0,0,0-1.414-1.414L13,14.586V3A1,1,0,0,0,12,2Z'/%3e%3c/svg%3e" alt=""> Export CSV</button>
+                            <button id="visualize"><img src="/APTracker/assets/globe-CYeG1keH.svg" alt="">Visualize</button>
+                        </div>
+                        <div class="description">
+                            <strong>Current step:</strong> Description of the current step. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec auctor, nisl eget ultricies lacinia, nunc nisl aliquam nisl.
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </body>
     <footer>
