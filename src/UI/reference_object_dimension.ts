@@ -56,14 +56,14 @@ function render(width: number | null, length: number | null, height: number | nu
     length = (length == null || Number.isNaN(length)) ? 0 : length;
     height = (height == null || Number.isNaN(height)) ? 0 : height;
 
-    // --- Cleanup previous renderer if re-called ---
+    // Cleanup previous renderer if re-called
     if (animationFrameId !== null) cancelAnimationFrame(animationFrameId);
     if (renderer !== null) {
         renderer.dispose();
         renderer.domElement.remove();
     }
 
-    // --- Scene setup ---
+    // Scene setup
     const container = document.getElementById('refObjDiagram')!;
     
     const W = container.clientWidth;
@@ -77,19 +77,18 @@ function render(width: number | null, length: number | null, height: number | nu
     camera.lookAt(width / 2, length / 2, height / 2);
     camera.position.set(maxDim * 2, -maxDim * 3, maxDim * 2); // x-right, y-back, z-up view
     camera.up.set(0, 0, 1); 
+    camera.fov = 30;
 
     renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(W, H);
-    container.appendChild(renderer.domElement); // <-- goes into your div
+    container.appendChild(renderer.domElement);
 
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(width / 2, length / 2, height / 2);
-    camera.up.set(0, 0, 1);  // must be set BEFORE controls.update()
+    camera.up.set(0, 0, 1);
     controls.update();
 
-    // --- Box ---
-    // BoxGeometry is centered at origin by default, so translate it so
-    // one corner sits at (0,0,0) and it extends into +x, +y, +z.
+    // Box
     const boxGeo = new THREE.BoxGeometry(
         Math.max(Math.abs(width),  0.001),
         Math.max(Math.abs(length), 0.001),
@@ -101,7 +100,6 @@ function render(width: number | null, length: number | null, height: number | nu
         transparent: true,
     });
     const box = new THREE.Mesh(boxGeo, boxMat);
-    // Shift the corner
     box.position.set(width / 2, length / 2, height / 2);
     scene.add(box);
 
@@ -113,11 +111,11 @@ function render(width: number | null, length: number | null, height: number | nu
     wireframe.position.copy(box.position);
     scene.add(wireframe);
 
-    // --- Arrows ---
+    // Arrows 
     // ArrowHelper(direction, origin, length, color)
-    const arrowLength = maxDim * 0.6;
+    const arrowLength = maxDim * 0.8;
     const headLength  = arrowLength * 0.2;
-    const headWidth   = arrowLength * 0.1;
+    const headWidth   = arrowLength * 0.15;
 
     const arrows: [THREE.Vector3, number, string][] = [
         [new THREE.Vector3(1, 0, 0),  0xff4444, 'X (width)'],   // right
@@ -130,13 +128,13 @@ function render(width: number | null, length: number | null, height: number | nu
         scene.add(arrow);
     }
 
-    // --- Lighting ---
+    // Lighting
     scene.add(new THREE.AmbientLight(0xffffff, 0.5));
     const dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(maxDim * 3, maxDim * 3, maxDim * 3);
     scene.add(dirLight);
 
-    // --- Animate ---
+    // Animate
     function animate() {
         animationFrameId = requestAnimationFrame(animate);
         controls.update();
@@ -144,7 +142,7 @@ function render(width: number | null, length: number | null, height: number | nu
     }
     animate();
 
-    // --- Resize handler ---
+    // Resize handler
     new ResizeObserver(() => {
         const w = container.clientWidth;
         const h = container.clientHeight;
