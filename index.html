@@ -18,8 +18,8 @@
 
         <!-- Title -->
         <title>AP Tracker</title>
-      <script type="module" crossorigin src="/APTracker/assets/index-CaXUhO9P.js"></script>
-      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-_RWwX_FS.css">
+      <script type="module" crossorigin src="/APTracker/assets/index-CwoAlkQX.js"></script>
+      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-CUQnBhoH.css">
     </head>
     <body>
         <div class="toolbar">
@@ -36,7 +36,7 @@
         <div class="main">
             <div class="workflow">
                 <h2 class="workflow-label">Workflow</h2>
-                <div class="step done" id="Upload">
+                <div class="step" id="Upload">
                     <div class="step-num">1</div>
                     <div class="step-text">
                         <h4 class="step-title">Upload videos</h4>
@@ -44,7 +44,7 @@
                     </div>
                 </div>
                 <div class="connector"></div>
-                <div class="step inprogress" id="Sync">
+                <div class="step" id="Sync">
                     <div class="step-num">2</div>
                     <div class="step-text">
                         <h4 class="step-title">Sync & trim</h4>
@@ -93,14 +93,14 @@
                 </div>
                 <div class="progress">
                     <p>Progression</p>
-                    <div class="progress-label">1/7</div>
-                    <div class="progress-bar" style="--level: 14%">
+                    <div class="progress-label" id="progress-label"></div>
+                    <div class="progress-bar" id="progress-bar">
                         <div class="progress-fill"></div>
                     </div>
                 </div>
             </div>
             <div class="card-container">
-                <div class="card done" id="Upload">
+                <div class="card" id="Upload">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">1</div>
@@ -111,10 +111,14 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        
+                        <div class="preview-grid hidden" id="preview-grid"></div>
+                        <div class="upload-area" id="upload-area">
+                            <p>Click or drag and drop to upload videos</p>
+                        </div>
+                        <input type="file" id="video-upload" accept="video/*" multiple hidden>
                     </div>
                 </div>
-                <div class="card inprogress" id="Upload">
+                <div class="card" id="Sync">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">2</div>
@@ -128,21 +132,34 @@
                         
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="RefDim">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">3</div>
                             <h3 class="card-title">Reference object dimensions</h3>
                         </div>
                         <div class="right">
-
                         </div>
                     </div>
                     <div class="card-content">
-                        
+                        <div class="input-container">
+                            <div class="input-group">
+                                <p for="ref-width">Width (x):</p>
+                                <input type="number" id="ref-width" placeholder="Enter width">
+                            </div>
+                            <div class="input-group">
+                                <p for="ref-length">Length (y):</p>
+                                <input type="number" id="ref-length" placeholder="Enter length">
+                            </div>
+                            <div class="input-group">
+                                <p for="ref-height">Height (z):</p>
+                                <input type="number" id="ref-height" placeholder="Enter height">
+                            </div>
+                        </div> 
+                        <div id="refObjDiagram"></div>
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="RefCorner">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">4</div>
@@ -156,7 +173,7 @@
                         
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="TargetObj">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">5</div>
@@ -173,23 +190,23 @@
                 <div class="card final">
                     <h4>Readiness Check</h4>
                     <div class="statuses">
-                        <div class="item done">
+                        <div class="item" id="Upload">
                             <div class="dot"></div>
                             <p>Upload videos</p>
                         </div>
-                        <div class="item inprogress">
+                        <div class="item" id="Sync">
                             <div class="dot"></div>
                             <p>Sync & trim</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="RefDim">
                             <div class="dot"></div>
                             <p>Reference object dimensions</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="RefCorner">
                             <div class="dot"></div>
                             <p>Mark reference object corners</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="TargetObj">
                             <div class="dot"></div>
                             <p>Mark target object</p>
                         </div>
@@ -200,7 +217,7 @@
                             <button id="export"><img src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='utf-8'?%3e%3c!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3e%3csvg%20fill='%23000000'%20width='800px'%20height='800px'%20viewBox='0%200%2024%2024'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M4,20H20a1,1,0,0,1,0,2H4a1,1,0,0,1,0-2ZM12,2a1,1,0,0,0-1,1V14.586L8.707,12.293a1,1,0,1,0-1.414,1.414l4,4a1,1,0,0,0,.325.216.986.986,0,0,0,.764,0,1,1,0,0,0,.325-.216l4-4a1,1,0,0,0-1.414-1.414L13,14.586V3A1,1,0,0,0,12,2Z'/%3e%3c/svg%3e" alt=""> Export CSV</button>
                             <button id="visualize"><img src="/APTracker/assets/globe-CYeG1keH.svg" alt="">Visualize</button>
                         </div>
-                        <div class="description">
+                        <div class="description" id="description">
                             <strong>Current step:</strong> Description of the current step. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec auctor, nisl eget ultricies lacinia, nunc nisl aliquam nisl.
                         </div>
                     </div>
