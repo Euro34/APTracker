@@ -19,6 +19,7 @@
         <link rel="stylesheet" href="src/assets/css/toolbar.css">
         <link rel="stylesheet" href="src/assets/css/workflow.css">
         <link rel="stylesheet" href="src/assets/css/card_container.css">
+        <link rel="stylesheet" href="src/assets/css/upload.css">
 
         <!-- Title -->
         <title>AP Tracker</title>
@@ -38,7 +39,7 @@
         <div class="main">
             <div class="workflow">
                 <h2 class="workflow-label">Workflow</h2>
-                <div class="step done" id="Upload">
+                <div class="step" id="Upload">
                     <div class="step-num">1</div>
                     <div class="step-text">
                         <h4 class="step-title">Upload videos</h4>
@@ -46,7 +47,7 @@
                     </div>
                 </div>
                 <div class="connector"></div>
-                <div class="step inprogress" id="Sync">
+                <div class="step" id="Sync">
                     <div class="step-num">2</div>
                     <div class="step-text">
                         <h4 class="step-title">Sync & trim</h4>
@@ -95,14 +96,14 @@
                 </div>
                 <div class="progress">
                     <p>Progression</p>
-                    <div class="progress-label">1/7</div>
-                    <div class="progress-bar" style="--level: 14%">
+                    <div class="progress-label" id="progress-label"></div>
+                    <div class="progress-bar" id="progress-bar">
                         <div class="progress-fill"></div>
                     </div>
                 </div>
             </div>
             <div class="card-container">
-                <div class="card done" id="Upload">
+                <div class="card" id="Upload">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">1</div>
@@ -113,10 +114,14 @@
                         </div>
                     </div>
                     <div class="card-content">
-                        
+                        <div class="preview-grid hidden" id="preview-grid"></div>
+                        <div class="upload-area" id="upload-area">
+                            <p>Click or drag and drop to upload videos</p>
+                        </div>
+                        <input type="file" id="video-upload" accept="video/*" multiple hidden>
                     </div>
                 </div>
-                <div class="card inprogress" id="Upload">
+                <div class="card" id="Sync">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">2</div>
@@ -130,7 +135,7 @@
                         
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="RefDim">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">3</div>
@@ -144,7 +149,7 @@
                         
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="RefCorner">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">4</div>
@@ -158,7 +163,7 @@
                         
                     </div>
                 </div>
-                <div class="card" id="Upload">
+                <div class="card" id="TargetObj">
                     <div class="card-header">
                         <div class="left">
                             <div class="card-number">5</div>
@@ -175,23 +180,23 @@
                 <div class="card final">
                     <h4>Readiness Check</h4>
                     <div class="statuses">
-                        <div class="item done">
+                        <div class="item" id="Upload">
                             <div class="dot"></div>
                             <p>Upload videos</p>
                         </div>
-                        <div class="item inprogress">
+                        <div class="item" id="Sync">
                             <div class="dot"></div>
                             <p>Sync & trim</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="RefDim">
                             <div class="dot"></div>
                             <p>Reference object dimensions</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="RefCorner">
                             <div class="dot"></div>
                             <p>Mark reference object corners</p>
                         </div>
-                        <div class="item">
+                        <div class="item" id="TargetObj">
                             <div class="dot"></div>
                             <p>Mark target object</p>
                         </div>
@@ -211,6 +216,7 @@
         </div>
     </body>
     <footer>
-        <script type="module" src="/src/UI/Workflow.ts"></script>
+        <script type="module" src="/src/UI/workflow.ts"></script>
+        <script type="module" src="/src/UI/upload.ts"></script>
     </footer>
 </html>

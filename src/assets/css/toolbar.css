@@ -32,12 +32,12 @@
 .toolbar-right button {
     display: flex;
     align-items: center;
+    padding: 10px;
     border: none;
     background-color: transparent;
     color: var(--text1-color);
     font-size: var(--text-s);
     cursor: pointer;
-    padding: 10px;
 }
 
 .toolbar-right button img{

@@ -55,6 +55,12 @@
     border-color: var(--warning-color);
 }
 
+.card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
 .card.final {
     display: flex;
     flex-direction: column;
@@ -113,14 +119,14 @@
 .button-cluster {
     display: grid;
     grid-template-columns: 1fr 1fr; 
-    gap: 10px;
     min-width: calc(50% - 5px);
+    gap: 10px;
 }
 
 .button-cluster button {
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     padding: 10px;
     border-width: 1px;
     border-style: solid;
@@ -144,9 +150,10 @@
 }
 
 .container .description {
-    padding: 10px;
-    color: var(--text2-color);
-    background-color: var(--background3-color);
     min-width: calc(50% - 5px);
+    padding: 10px 15px;
     border-radius: 10px;
+    background-color: var(--background3-color);
+    color: var(--text2-color);
+    text-align: justify;
 }

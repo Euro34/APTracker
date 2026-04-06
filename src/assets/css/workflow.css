@@ -57,6 +57,14 @@
     gap: 10px;
 }
 
+.about-me .progress-label {
+    flex-shrink: 0;
+    width: 38px;
+    font-size: var(--text-xxs);
+    text-align: right;
+    opacity: 0.7;
+}
+
 .progress .progress-bar {
     overflow: hidden;
     flex: 1;
@@ -73,10 +81,6 @@
     transition: width 0.6s ease;
 }
 
-.about-me .progress-label {
-    flex-shrink: 0;
-    width: 38px;
-    font-size: var(--text-xxs);
-    text-align: right;
-    opacity: 0.7;
+.progress .progress-fill.completed {
+    background-color: var(--success-color);
 }
