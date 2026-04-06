@@ -1,0 +1,82 @@
+.workflow {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    height: 100%;
+    padding: 20px;
+    background-color: var(--background3-color);
+}
+
+.workflow-label {
+    color: var(--text1-color);
+}
+
+.step {
+    display: flex;
+    margin-top: 20px;
+    gap: 15px;
+}
+
+.step .step-num {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    background-color: var(--accent1-color);
+    color: var(--text1-color);
+}
+
+.step.done .step-num {
+    background-color: var(--success-color);
+}
+
+.step.inprogress .step-num {
+    background-color: var(--warning-color);
+}
+
+.step-text {
+    display: flex;
+    flex-direction: column;
+    padding: 3px 0;
+    gap :10px;
+}
+
+.connector { 
+    width: 1px; 
+    height: 30px; 
+    margin-left: 12px; 
+    background: var(--accent1-color); 
+}
+
+.workflow .progress {
+    display: flex;
+    flex-direction: column;
+    margin-top: auto;
+    gap: 10px;
+}
+
+.progress .progress-bar {
+    overflow: hidden;
+    flex: 1;
+    height: 10px;
+    border-radius: 100px;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.progress .progress-fill {
+    width: var(--level);
+    height: 100%;
+    border-radius: 100px;
+    background-color: var(--warning-color);
+    transition: width 0.6s ease;
+}
+
+.about-me .progress-label {
+    flex-shrink: 0;
+    width: 38px;
+    font-size: var(--text-xxs);
+    text-align: right;
+    opacity: 0.7;
+}

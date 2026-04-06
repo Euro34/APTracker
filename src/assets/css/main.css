@@ -1,23 +1,28 @@
-@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:ital,opsz,wght@0,17..18,400..700;1,17..18,400..700&display=swap');
 
 /*-------------------------------------
 Color Palette & Font Size
 --------------------------------------*/
 :root {
-	--text-color: #d3d3d3;
-	--accent1-color:  #e4a7e7;
-	--accent2-color: #e7b1ea;
-	--primary-color: #282328;
-	--secondary-color: #3c383c;
-	--primary-background-color: #171717;
-	--secondary-background-color: #2c2c2c;
+	--text1-color: #f0f0f0;
+    --text2-color: #a4a4a4;
+	--accent1-color:  #999999;
+	--background1-color: #171717;
+	--background2-color: #2c2c2c;
+    --background3-color: #232323;
+    --border-color: #3a3a3a;
+
+    --success-color: #22946e;
+    --warning-color: #c48d2f;
+    --danger-color: #d94a4a;
+    --inprogress-color: #21498a;
 
 	--text-xl: 1.875rem;
 	--text-l: 1.5rem;
 	--text-m: 1.25rem;
-	--text-s: 1.125rem;
-	--text-xs: 1rem;
-	--text-xxs: 0.938rem;
+	--text-s: 1rem;
+	--text-xs: 0.938rem;
+	--text-xxs: 0.875rem;
 }
 
 /*-------------------------------------
@@ -37,24 +42,20 @@ Default code
 }
 
 * {
-	color: var(--text-color);
-	font-family: 'Quicksand', sans-serif;
+	color: var(--text1-color);
+	font-family: 'Google Sans', sans-serif;
 }
 
 /*-------------------------------------
 body
 --------------------------------------*/
 body {
-	background-color: var(--primary-background-color);
+	background-color: var(--background1-color);
 }
 
-section {
+.main {
 	display: flex;
-    flex-direction: column;
-    align-items: center;
-	padding-top: 90px;
-	padding-bottom: 25px;
-	gap: 30px;
+    height: calc(100vh - 60px);
 }
 
 /*-------------------------------------
@@ -72,12 +73,17 @@ h3 {
 	font-size: var(--text-m);
 }
 
+h4 {
+    font-size: var(--text-s);
+}
+
 p {
-	font-size: var(--text-s);
+    color: var(--text2-color);
+	font-size: var(--text-xs);
 }
 
 a {
-    color: var(--text-color);
-    font-size: var(--text-s);
+    color: var(--text2-color);
+    font-size: var(--text-xs);
     text-decoration: none;
 }
