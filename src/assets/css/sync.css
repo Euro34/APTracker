@@ -113,6 +113,11 @@
 }
 
 /* Player Controls */
+.SyncEditor .content {
+    display: flex;
+    flex-direction: column;
+}
+
 .SyncEditor .players-control {
     position: relative;
     display: grid;
@@ -303,4 +308,23 @@
     background-color: #ffe341;
     cursor: ew-resize;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+#match-duration {
+    align-self: center;
+    justify-self: center;
+    margin-top: 10px;
+    padding: 5px 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background-color: var(--background1-color);
+    color: var(--text1-color);
+    font-size: var(--text-xxs);
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+#match-duration:hover {
+    background-color: var(--border-color);
+    color: var(--background1-color);
 }

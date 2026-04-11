@@ -4,6 +4,7 @@ import { ReferenceObject } from "./core/ReferenceObject";
 import { updateStatus } from "./UI/workflow";
 import { extractAllFrameTimestamps } from "./core/ExtractFrame";
 import { syncEditor } from "./UI/sync";
+import {} from "./UI/reference_object_dimension";
 
 class APTracker {
     uploadedVideos: File[] = [];
@@ -12,6 +13,7 @@ class APTracker {
     referenceObject: ReferenceObject | null = null;
 
     updateVideos(videos: File[]) {
+        console.log("Updating videos:", videos);
         this.uploadedVideos = videos;
         if (this.uploadedVideos.length === 2) {
             updateStatus("Upload", "done");
@@ -35,8 +37,12 @@ class APTracker {
     }
 
     updateSync(trimStates: (number[] | null)[]) {
+        console.log("Updating trim states:", trimStates);
         const [trim1, trim2] = trimStates;
-        if (!trim1 || !trim2) return;
+        if (!trim1 || !trim2) {
+            updateStatus("Sync", "");
+            return;
+        }
 
         const [start1, end1] = trim1;
         const [start2, end2] = trim2;
@@ -73,5 +79,6 @@ class APTracker {
         console.log("Updated reference object:", this.referenceObject);
     }
 }
+
 
 export let apTracker = new APTracker();

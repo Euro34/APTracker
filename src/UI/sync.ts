@@ -10,7 +10,7 @@ openSyncEditorBtn.addEventListener("click", () => {
 });
 
 closeSyncEditorBtn.addEventListener("click", () => {
-	apTracker.updateSync(syncEditor.getTrimState())
+	syncEditor.updateMain();
     const syncEditorContainer = document.querySelector(".SyncEditor") as HTMLDivElement;
     syncEditorContainer.classList.remove("active");
 });
@@ -40,11 +40,12 @@ class VideoHandler {
     
     get hasVideo(): boolean {return this.file.size > 0 && this.frameTimestamps.length > 0;}
 
+    get isPaused(): boolean {return this.video.paused;}
+	
     get totalFrames(): number {return this.frameTimestamps.length;}
 
-	get currentFrame(): number {return this.frameTimestamps.findIndex(t => t >= this.video.currentTime);}
+	get currentFrame(): number {return this.frameAtTime(this.video.currentTime);}
 
-    get isPaused(): boolean {return this.video.paused;}
 
 	constructor(name: string) {
 		this.file = new File([], "");
@@ -93,13 +94,33 @@ class VideoHandler {
 		this.setDefault();
 	}
 
+	
+	public frameAtTime(time: number): number {
+		return this.frameTimestamps.findIndex(t => t >= time);
+	}
+
+	public timeAtFrame(frame: number): number {
+		return this.frameTimestamps[frame];
+	}
+
+	private formatTime(frame: number): string {
+        const seconds = this.timeAtFrame(frame);
+        const m = Math.floor(seconds / 60);
+        const s = Math.floor(seconds % 60);
+
+        // Count how many frames fall within the same whole second
+        const secondStart = Math.floor(seconds);
+        const secondToFrame = this.frameTimestamps.filter(t => t >= secondStart && t < seconds).length;
+
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(secondToFrame).padStart(2, "0")}`;
+    }
+
 
 	// Playback
 	public togglePlay() {
-		if (!this.hasVideo) return;
         if (this.isPaused) {
-			if (this.video.currentTime >= this.frameTimestamps[this.endFrame]) {
-				this.video.currentTime = this.frameTimestamps[this.startFrame];
+			if (this.video.currentTime >= this.timeAtFrame(this.endFrame)) {
+				this.video.currentTime = this.timeAtFrame(this.startFrame);
 			}
 			this.play();
 		} else {
@@ -108,12 +129,14 @@ class VideoHandler {
     }
 
     public play() {
+		if (!this.hasVideo) return;
 		this.video.play(); 
 		this.updatePlayBtn(this.isPaused);
 		this.movePlayhead();
 	}
 
 	public pause() {
+		if (!this.hasVideo) return;
 		this.video.pause();
 		this.updatePlayBtn(this.isPaused);
 		this.movePlayhead();
@@ -127,8 +150,10 @@ class VideoHandler {
 	public seekForward() {this.seekToFrame(this.currentFrame + 1);}
 
 	public seekToFrame(frame: number) {
-		if (!this.hasVideo) return;
-		this.video.currentTime = this.frameTimestamps[frame];
+		frame = Math.max(frame, this.startFrame);
+		frame = Math.min(frame, this.endFrame);
+		this.video.currentTime = this.timeAtFrame(frame);
+		this.movePlayhead();
 	}
 
     // Frame stepping
@@ -238,15 +263,16 @@ class VideoHandler {
     // Trim UI
 	private movePlayhead() {
 		if (!this.hasVideo) return;
-        if (this.video.currentTime > this.frameTimestamps[this.endFrame]) {
+        if (this.video.currentTime > this.timeAtFrame(this.endFrame)) {
 			this.video.pause();
-			this.video.currentTime = this.frameTimestamps[this.startFrame];
+			this.video.currentTime = this.timeAtFrame(this.startFrame);
 		}
 
 		const pct = this.video.currentTime / this.video.duration * 100;
 		this.playhead.style.setProperty("--pos", `${pct}%`);
-;
-		this.currentTimeDisplay.textContent = `Current time: ${this.formatTime(this.currentFrame)}`;
+
+		const currentFrame = this.currentFrame - this.startFrame;
+		this.currentTimeDisplay.textContent = `Current time: ${this.formatTime(currentFrame)}`;
 	}
 
 	public updateTrimDisplay() {
@@ -264,19 +290,7 @@ class VideoHandler {
         this.durationDisplay.textContent = `Duration: ${this.formatTime(duration)}`;
 	}
 
-	private formatTime(frame: number): string {
-        const seconds = this.frameTimestamps[frame];
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-
-        // Count how many frames fall within the same whole second
-        const secondStart = Math.floor(seconds);
-        const secondToFrame = this.frameTimestamps.filter(t => t >= secondStart && t < seconds).length;
-
-        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(secondToFrame).padStart(2, "0")}`;
-    }
-
-	public updateVideo(file: File, timestamps: number[]) {
+	public updateVideo(file: File, timestamps: number[], startTrim: number | null = null, endTrim: number | null = null) {
         this.file = file;
         this.frameTimestamps = timestamps;
 
@@ -285,13 +299,21 @@ class VideoHandler {
         this.video.src = src;
         this.video.load();
 
-        this.startFrame = 0;
-        this.endFrame = this.totalFrames - 1;
+		if (startTrim === null) {
+			this.startFrame = 0;
+		} else {
+			this.startFrame = startTrim;
+		}
+		if (endTrim === null) {
+			this.endFrame = this.totalFrames - 1;
+		} else {
+			this.endFrame = endTrim;
+		}
 
-        // Seek to first frame once ready
+        // Seek to start frame once ready
         this.video.addEventListener("loadedmetadata", () => {
-            this.video.currentTime = timestamps[0];
-            this.updateTrimDisplay();
+            this.seekToStart();
+			this.updateTrimDisplay();
         }, { once: true });
     }
 
@@ -313,6 +335,7 @@ class VideoHandler {
 		this.trimSelection.style.setProperty("--end", "100%");
 		this.playhead.style.setProperty("--pos", "0%");
 		this.durationDisplay.textContent = "Duration: 00:00.00";
+		this.currentTimeDisplay.textContent = "Current time: 00:00.00";
 	}
 }
 
@@ -321,6 +344,12 @@ class SyncEditor {
 	private videoB: VideoHandler;
 
 	private playBtn: HTMLButtonElement;
+	private startA: HTMLDivElement;
+	private endA: HTMLDivElement;
+	private startB: HTMLDivElement;
+	private endB: HTMLDivElement;
+	private durationA: HTMLDivElement;
+	private durationB: HTMLDivElement;
 
 	// Cache by filename so we can detect which slot each file belongs to
 	private fileCache: Map<string, { file: File; timestamps: number[] }> = new Map();
@@ -337,11 +366,18 @@ class SyncEditor {
 
 		this.playBtn = playerBoth.querySelector(".play") as HTMLButtonElement;
 		this.playBtn.addEventListener("click", () => this.toggleBoth());
+		document.getElementById("match-duration")!.addEventListener("click", () => this.matchDuration());
+
+		this.startA = document.getElementById("start-time-A")?.querySelector(".value") as HTMLDivElement;
+		this.startB = document.getElementById("start-time-B")?.querySelector(".value") as HTMLDivElement;
+		this.endA = document.getElementById("end-time-A")?.querySelector(".value") as HTMLDivElement;
+		this.endB = document.getElementById("end-time-B")?.querySelector(".value") as HTMLDivElement;
+		this.durationA = document.getElementById("duration-A")?.querySelector(".value") as HTMLDivElement;
+		this.durationB = document.getElementById("duration-B")?.querySelector(".value") as HTMLDivElement;
 	}
 
 	// Playback Both
 	private toggleBoth() {
-		if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
         if (this.videoA.isPaused) {
             this.videoA.play();
             this.videoB.play();
@@ -367,29 +403,72 @@ class SyncEditor {
 		this.videoB.seekForward();
 	}
 
-	// ── Match duration ────────────────────────────────────────────────────────
-
-	public matchBDurationToA() {
+	// Match duration
+	public matchDuration() {
 		if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
-		const targetDuration = this.videoA.endFrame - this.videoA.startFrame;
-		const bStart = this.videoB.startFrame;
-		const targetEndTime = bStart + targetDuration;
 
-		// Find the closest frame in B to targetEndTime
-		const timestamps = this.videoB.frameTimestamps;
-		let closest = timestamps.length - 1;
-		let minDiff = Infinity;
-		for (let i = 0; i < timestamps.length; i++) {
-			const diff = Math.abs(timestamps[i] - targetEndTime);
-			if (diff < minDiff) { minDiff = diff; closest = i; }
+		const DurationA = this.videoA.endFrame - this.videoA.startFrame;
+		const DurationB = this.videoB.endFrame - this.videoB.startFrame;
+
+		if (DurationA === DurationB) return;
+		if (DurationA < DurationB) {
+			this.videoB.endFrame = this.videoB.startFrame + DurationA;
+			this.videoB.seekToFrame(this.videoB.startFrame);
+			this.videoB.updateTrimDisplay();
+		} else {
+			this.videoA.endFrame = this.videoA.startFrame + DurationB;
+			this.videoA.seekToFrame(this.videoA.startFrame);
+			this.videoA.updateTrimDisplay();
 		}
-		this.videoB.endFrame = Math.max(this.videoB.startFrame + 1, closest);
-		this.videoB.updateTrimDisplay();
+	}
+	
+	// File management
+	public updateVideos(files: File[], frameTimestamps: number[][]) {
+		// Build incoming map
+		const incoming = new Map<string, { file: File; timestamps: number[] }>();
+		files.forEach((f, i) => {
+			incoming.set(f.name, { file: f, timestamps: frameTimestamps[i] ?? [] });
+		});
+
+		// Sync cache
+		for (const name of this.fileCache.keys()) {
+			if (!incoming.has(name)) this.fileCache.delete(name);
+		}
+		for (const [name, data] of incoming) {
+			this.fileCache.set(name, data);
+		}
+
+		const aStillPresent = this.videoA.file.name !== "" && this.fileCache.has(this.videoA.file.name);
+		const bStillPresent = this.videoB.file.name !== "" && this.fileCache.has(this.videoB.file.name);
+
+		// Snapshot B's trim
+		const bTrimSnapshot = bStillPresent ? {startFrame: this.videoB.startFrame, endFrame: this.videoB.endFrame,} : null;
+
+		if (!aStillPresent) this.videoA.reset();
+		if (!bStillPresent) this.videoB.reset();
+
+		// Shift B into A
+		if (!this.videoA.hasVideo && this.videoB.hasVideo && bTrimSnapshot) {
+			this.videoA.updateVideo(this.videoB.file, this.videoB.frameTimestamps, bTrimSnapshot.startFrame, bTrimSnapshot.endFrame);
+			this.videoB.reset();
+		}
+		this.videoA.seekToStart();
+
+		// Assign new files to empty slots
+		const newFiles = [...this.fileCache.values()].filter(
+			d => d.file.name !== this.videoA.file.name && d.file.name !== this.videoB.file.name
+		);
+		for (const data of newFiles) {
+			if (!this.videoA.hasVideo) {
+				this.videoA.updateVideo(data.file, data.timestamps);
+			} else if (!this.videoB.hasVideo) {
+				this.videoB.updateVideo(data.file, data.timestamps);
+			}
+		}
+		this.updateMain();
 	}
 
-	// ── File management ───────────────────────────────────────────────────────
-
-	// Returns the trim state for both videos — call this when proceeding to tracking
+	// Return
 	public getTrimState(): (number[] | null)[]  {
 		return [
 			this.videoA.hasVideo ? [this.videoA.startFrame, this.videoA.endFrame] : null,
@@ -397,46 +476,32 @@ class SyncEditor {
 		];
 	}
 
-	public updateVideos(files: File[], frameTimestamps: number[][]) {
-		// Build a name->data map from incoming files
-		const incoming = new Map<string, { file: File; timestamps: number[] }>();
-		files.forEach((f, i) => {
-			incoming.set(f.name, { file: f, timestamps: frameTimestamps[i] ?? [] });
-		});
+	public updateMain() {
+		apTracker.updateSync(this.getTrimState());
+		const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
 
-		// Merge into cache (add new, remove deleted)
-		// Remove files no longer present
-		for (const name of this.fileCache.keys()) {
-			if (!incoming.has(name)) this.fileCache.delete(name);
+		if (this.videoA.hasVideo) {
+			const startATime = this.videoA.timeAtFrame(this.videoA.startFrame);
+			const endATime = this.videoA.timeAtFrame(this.videoA.endFrame);
+			this.startA.textContent = fmt(startATime);
+			this.endA.textContent = fmt(endATime);
+			this.durationA.textContent = fmt(endATime - startATime);
+		} else {
+			this.startA.textContent = "-";
+			this.endA.textContent = "-";
+			this.durationA.textContent = "-";
 		}
-		// Add/update incoming files
-		for (const [name, data] of incoming) {
-			this.fileCache.set(name, data);
-		}
 
-		// Determine A and B slots
-		// A = files[0] if present, B = files[1] if present
-		// But since array only contains remaining files, we preserve slot
-		// by checking if the existing slot's filename is still in the cache
-		const aStillPresent = this.videoA.file.name !== "" && this.fileCache.has(this.videoA.file.name);
-		const bStillPresent = this.videoB.file.name !== "" && this.fileCache.has(this.videoB.file.name);
-
-		// Collect truly new files (not currently loaded in either slot)
-		const newFiles = [...this.fileCache.values()].filter(
-			d => d.file.name !== this.videoA.file.name && d.file.name !== this.videoB.file.name
-		);
-
-		// Reset slots that lost their file
-		if (!aStillPresent) this.videoA.reset();
-		if (!bStillPresent) this.videoB.reset();
-
-		// Assign new files to empty slots, A first then B
-		for (const data of newFiles) {
-			if (!this.videoA.hasVideo) {
-				this.videoA.updateVideo(data.file, data.timestamps);
-			} else if (!this.videoB.hasVideo) {
-				this.videoB.updateVideo(data.file, data.timestamps);
-			}
+		if (this.videoB.hasVideo) {
+			const startBTime = this.videoB.timeAtFrame(this.videoB.startFrame);
+			const endBTime = this.videoB.timeAtFrame(this.videoB.endFrame);
+			this.startB.textContent = fmt(startBTime);
+			this.endB.textContent = fmt(endBTime);
+			this.durationB.textContent = fmt(endBTime - startBTime);
+		} else {
+			this.startB.textContent = "-";
+			this.endB.textContent = "-";
+			this.durationB.textContent = "-";
 		}
 	}
 }

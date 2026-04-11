@@ -138,22 +138,22 @@
                             <div class="cam">
                                 Camera A
                                 <div class="data-container">
-                                    <div class="info" id="Duration-A">
-                                        <p class="header">Duration</p>
+                                    <div class="info" id="start-time-A">
+                                        <p class="header">Start time</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
                                             <p class="unit">s</p>
                                         </div>
                                     </div>
-                                    <div class="info" id="FrameRate-A">
-                                        <p class="header">Frame rate</p>
+                                    <div class="info" id="end-time-A">
+                                        <p class="header">End time</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
-                                            <p class="unit">fps</p>
+                                            <p class="unit">s</p>
                                         </div>
                                     </div>
-                                    <div class="info" id="StartTime-A">
-                                        <p class="header">Start time</p>
+                                    <div class="info" id="duration-A">
+                                        <p class="header">Duration</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
                                             <p class="unit">s</p>
@@ -164,22 +164,22 @@
                             <div class="cam">
                                 Camera B
                                 <div class="data-container">
-                                    <div class="info" id="Duration-B">
-                                        <p class="header">Duration</p>
+                                    <div class="info" id="start-time-B">
+                                        <p class="header">Start time</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
                                             <p class="unit">s</p>
                                         </div>
                                     </div>
-                                    <div class="info" id="FrameRate-B">
-                                        <p class="header">Frame rate</p>
+                                    <div class="info" id="end-time-B">
+                                        <p class="header">End time</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
-                                            <p class="unit">fps</p>
+                                            <p class="unit">s</p>
                                         </div>
                                     </div>
-                                    <div class="info" id="StartTime-B">
-                                        <p class="header">Start time</p>
+                                    <div class="info" id="duration-B">
+                                        <p class="header">Duration</p>
                                         <div class="value-unit">
                                             <p class="value">-</p>
                                             <p class="unit">s</p>
@@ -391,14 +391,12 @@
                     <div class="current-time">Current time: 00:00:00</div>
                 </div>
             </div>
+            <button id="match-duration">Match duration</button>
         </div>
     </div>
 
 
     <footer>
-        <script type="module" src="/src/UI/workflow.ts"></script>
-        <script type="module" src="/src/UI/upload.ts"></script>
-        <script type="module" src="/src/UI/sync.ts"></script>
-        <script type="module" src="/src/UI/reference_object_dimension.ts"></script>
+        <script type="module" src="src/UI/upload.ts"></script>
     </footer>
 </html>

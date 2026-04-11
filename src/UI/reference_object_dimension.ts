@@ -1,10 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
-import { ReferenceObject } from '../core/ReferenceObject';
 import { apTracker } from '../main';
-
-export let referenceObject: ReferenceObject | null = null;
 
 const width_input = document.getElementById('ref-width')!;
 const length_input = document.getElementById('ref-length')!;
