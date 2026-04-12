@@ -16,7 +16,6 @@ closeSyncEditorBtn.addEventListener("click", () => {
 });
 
 
-
 // SyncEditor
 class VideoHandler {
 	public file: File;
@@ -34,6 +33,8 @@ class VideoHandler {
 	private playhead: HTMLDivElement;
 	private durationDisplay: HTMLDivElement;
 	private currentTimeDisplay: HTMLDivElement;
+
+	private disabled = false;
     
     public startFrame: number = 0;
     public endFrame: number = 0;
@@ -205,15 +206,15 @@ class VideoHandler {
 			const rect = bar.getBoundingClientRect();
 			const clientX = e instanceof MouseEvent ? e.clientX : e.touches[0].clientX;
 			
-			// Get the relative pixel position of the click (0 to rect.width)
+			// Get the relative pixel position
 			const clickX = clientX - rect.left;
 
-			// Convert current state (frames/time) into pixel positions
+			// Convert current state frames into pixel positions
 			const startX = getStartFrac() * rect.width;
 			const endX = getEndFrac() * rect.width;
 			const playX = getPlayFrac() * rect.width;
 
-			// Define a constant pixel "hit" radius (e.g., 15px)
+			// Define a constant pixel hitbox size
 			const PLAYHEAD_HIT = 3;
         	const HANDLE_HIT = 12;
 
@@ -237,6 +238,7 @@ class VideoHandler {
 
         const onMove = (e: MouseEvent | TouchEvent) => {
             if (!dragging || !this.hasVideo) return;
+			if (this.disabled) return;
             const frac = fracFromEvent(e);
 
             if (dragging === "start-handle") {
@@ -263,7 +265,7 @@ class VideoHandler {
                 this.startFrame = newStart;
                 this.endFrame = newEnd;
                 this.updateTrimDisplay();
-				this.seekToFrame(this.frameAtTime(this.video.currentTime)); // Keep playhead relative to window
+				this.seekToFrame(this.frameAtTime(this.video.currentTime));
             }
             e.preventDefault();
         };
@@ -355,6 +357,10 @@ class VideoHandler {
 		this.durationDisplay.textContent = "Duration: 00:00.00";
 		this.currentTimeDisplay.textContent = "Current time: 00:00.00";
 	}
+
+	public toggleDisabled() {
+		this.disabled = !this.disabled;
+	}
 }
 
 class SyncEditor {
@@ -368,6 +374,11 @@ class SyncEditor {
 	private endB: HTMLDivElement;
 	private durationA: HTMLDivElement;
 	private durationB: HTMLDivElement;
+
+	private linkUnlinkBtn: HTMLButtonElement;
+	private linked = false;
+	private playerB: HTMLDivElement;
+	private trimB: HTMLDivElement;
 
 	// Cache by filename so we can detect which slot each file belongs to
 	private fileCache: Map<string, { file: File; timestamps: number[] }> = new Map();
@@ -384,7 +395,6 @@ class SyncEditor {
 
 		this.playBtn = playerBoth.querySelector(".play") as HTMLButtonElement;
 		this.playBtn.addEventListener("click", () => this.toggleBoth());
-		document.getElementById("match-duration")!.addEventListener("click", () => this.matchDuration());
 
 		this.startA = document.getElementById("start-time-A")?.querySelector(".value") as HTMLDivElement;
 		this.startB = document.getElementById("start-time-B")?.querySelector(".value") as HTMLDivElement;
@@ -392,6 +402,13 @@ class SyncEditor {
 		this.endB = document.getElementById("end-time-B")?.querySelector(".value") as HTMLDivElement;
 		this.durationA = document.getElementById("duration-A")?.querySelector(".value") as HTMLDivElement;
 		this.durationB = document.getElementById("duration-B")?.querySelector(".value") as HTMLDivElement;
+
+		this.linkUnlinkBtn = document.getElementById("link-unlink") as HTMLButtonElement;
+		this.linkUnlinkBtn.addEventListener("click", () => {this.linkBoth();});
+		this.playerB = document.getElementById("player-B") as HTMLDivElement;
+		this.trimB = document.getElementById("trim-B") as HTMLDivElement;
+
+		document.getElementById("match-duration")!.addEventListener("click", () => this.matchDuration());
 	}
 
 	// Playback Both
@@ -421,6 +438,28 @@ class SyncEditor {
 		this.videoB.seekForward();
 	}
 
+	// Link
+	private linkBoth() {
+		this.linked = !this.linked;
+		this.videoB.toggleDisabled();
+		this.linkUnlinkBtn.classList.toggle("active");
+		// if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
+		if (this.linked) {
+			this.playerB.style = "opacity: 0.5; cursor: not-allowed;";
+			this.playerB.querySelectorAll("*").forEach(item => {
+				item.setAttribute("disabled", "true");
+				item.classList.add("disabled");
+			});
+			this.trimB.style = "opacity: 0.5; cursor: not-allowed;";
+			this.trimB.querySelectorAll("*").forEach(item => {
+				item.setAttribute("disabled", "true");
+				item.classList.add("disabled");
+			});
+		} else {
+			this.trimB.style = "opacity: 1; cursor: default; z-index: 100;";
+		}
+	}
+
 	// Match duration
 	public matchDuration() {
 		if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
@@ -436,12 +475,12 @@ class SyncEditor {
 		if (DurationA === DurationB) return;
 		if (DurationA < DurationB) {
 			const targetTime = timestartB + DurationA;
-			const targetFrame = this.videoB.frameAtTime(targetTime) - 1;
+			const targetFrame = this.videoB.frameAtTime(targetTime);
 			this.videoB.endFrame = targetFrame;
 			this.videoB.updateTrimDisplay();
 		} else {
 			const targetTime = timestartA + DurationB;
-			const targetFrame = this.videoA.frameAtTime(targetTime) - 1;
+			const targetFrame = this.videoA.frameAtTime(targetTime);
 			this.videoA.endFrame = targetFrame;
 			this.videoA.updateTrimDisplay();
 		}
