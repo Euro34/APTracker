@@ -23,6 +23,7 @@ class VideoHandler {
 
 	private label: HTMLDivElement;
 	private fpsDisplay: HTMLParagraphElement;
+	public fps: number = 0;
 	public video: HTMLVideoElement;
 
 	private playBtn: HTMLButtonElement;
@@ -120,7 +121,7 @@ class VideoHandler {
         const secondStart = Math.floor(seconds);
         const secondToFrame = this.frameTimestamps.filter(t => t >= secondStart && t < seconds).length;
 
-        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}.${String(secondToFrame).padStart(2, "0")}`;
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}:${String(secondToFrame).padStart(2, "0")}`;
     }
 
 
@@ -294,7 +295,7 @@ class VideoHandler {
 		this.playhead.style.setProperty("--pos", `${pct}%`);
 
 		const currentFrame = this.timeAtFrame(this.currentFrame) - this.timeAtFrame(this.startFrame);
-		this.currentTimeDisplay.textContent = `Current time: ${currentFrame.toFixed(3)}s`;
+		this.currentTimeDisplay.textContent = `Current time: ${currentFrame.toFixed(3)} s`;
 	}
 
 	public updateTrimDisplay() {
@@ -309,7 +310,7 @@ class VideoHandler {
 		this.trimSelection.style.setProperty("--end", `${endPct}%`);
 		// this.movePlayhead()
 ;
-        this.durationDisplay.textContent = `Duration: ${this.duration.toFixed(3)}s`;
+        this.durationDisplay.textContent = `Duration: ${this.duration.toFixed(3)} s`;
 	}
 
 	public updateVideo(file: File, timestamps: number[], startTrim: number | null = null, endTrim: number | null = null) {
@@ -332,8 +333,8 @@ class VideoHandler {
 			this.endFrame = endTrim;
 		}
 
-		const fps = this.totalFrames > 1 ? (this.totalFrames - 1) / this.timeAtFrame(this.totalFrames - 1) : 0;
-		this.fpsDisplay.textContent = `~${fps.toFixed(2)} fps`;
+		this.fps = this.totalFrames > 1 ? (this.totalFrames - 1) / this.timeAtFrame(this.totalFrames - 1) : 0;
+		this.fpsDisplay.textContent = `~${this.fps.toFixed(2)} fps`;
 
         // Seek to start frame once ready
         this.video.addEventListener("loadedmetadata", () => {
@@ -355,13 +356,13 @@ class VideoHandler {
 	}
 
 	private setDefault() {
-		this.startTimeDisplay.textContent = "00:00.00";
-		this.endTimeDisplay.textContent = "00:00.00";
+		this.startTimeDisplay.textContent = "00:00:00";
+		this.endTimeDisplay.textContent = "00:00:00";
 		this.trimSelection.style.setProperty("--start", "0%");
 		this.trimSelection.style.setProperty("--end", "100%");
 		this.playhead.style.setProperty("--pos", "0%");
-		this.durationDisplay.textContent = "Duration: 00:00.00";
-		this.currentTimeDisplay.textContent = "Current time: 00:00.00";
+		this.durationDisplay.textContent = "Duration: 0.000 s";
+		this.currentTimeDisplay.textContent = "Current time: 0.000 s";
 	}
 
 	public toggleDisabled() {
@@ -381,10 +382,10 @@ class SyncEditor {
 	private durationA: HTMLDivElement;
 	private durationB: HTMLDivElement;
 
+	private trimA: HTMLDivElement;
+	private trimB: HTMLDivElement;
 	private linkUnlinkBtn: HTMLButtonElement;
 	private linked = false;
-	private playerB: HTMLDivElement;
-	private trimB: HTMLDivElement;
 
 	// Cache by filename so we can detect which slot each file belongs to
 	private fileCache: Map<string, { file: File; timestamps: number[] }> = new Map();
@@ -409,10 +410,16 @@ class SyncEditor {
 		this.durationA = document.getElementById("duration-A")?.querySelector(".value") as HTMLDivElement;
 		this.durationB = document.getElementById("duration-B")?.querySelector(".value") as HTMLDivElement;
 
-		this.linkUnlinkBtn = document.getElementById("link-unlink") as HTMLButtonElement;
-		this.linkUnlinkBtn.addEventListener("click", () => {this.linkBoth();});
-		this.playerB = document.getElementById("player-B") as HTMLDivElement;
+		this.trimA = document.getElementById("trim-A") as HTMLDivElement;
 		this.trimB = document.getElementById("trim-B") as HTMLDivElement;
+		this.linkUnlinkBtn = document.getElementById("link-unlink") as HTMLButtonElement;
+		this.linkUnlinkBtn.addEventListener("click", () => {
+			if (this.videoA.fps >= this.videoB.fps) {
+				this.toggleLink(this.trimB);
+			} else {
+				this.toggleLink(this.trimA);
+			}
+		});
 
 		document.getElementById("match-duration")!.addEventListener("click", () => this.matchDuration());
 	}
@@ -445,24 +452,23 @@ class SyncEditor {
 	}
 
 	// Link
-	private linkBoth() {
+	private toggleLink(trim: HTMLDivElement) {
+		// if (!this.videoA.hasVideo || !this.videoB.hasVideo) return; NOTE: UNCOMMENT LATER
 		this.linked = !this.linked;
 		this.videoB.toggleDisabled();
 		this.linkUnlinkBtn.classList.toggle("active");
-		// if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
 		if (this.linked) {
-			this.playerB.style = "opacity: 0.5; cursor: not-allowed;";
-			this.playerB.querySelectorAll("*").forEach(item => {
-				item.setAttribute("disabled", "true");
-				item.classList.add("disabled");
-			});
-			this.trimB.style = "opacity: 0.5; cursor: not-allowed;";
-			this.trimB.querySelectorAll("*").forEach(item => {
+			trim.style = "opacity: 0.5; cursor: not-allowed;";
+			trim.querySelectorAll("*").forEach(item => {
 				item.setAttribute("disabled", "true");
 				item.classList.add("disabled");
 			});
 		} else {
-			this.trimB.style = "opacity: 1; cursor: default; z-index: 100;";
+			trim.style = "opacity: 1; cursor: default;";
+			trim.querySelectorAll("*").forEach(item => {
+				item.setAttribute("disabled", "false");
+				item.classList.remove("disabled");
+			});
 		}
 	}
 
@@ -549,14 +555,14 @@ class SyncEditor {
 
 	public updateMain() {
 		apTracker.updateSync(this.getTrimState());
-		const fmt = (n: number) => (Math.round(n * 1000) / 1000).toString();
+		const format = (n: number) => (Math.round(n * 1000) / 1000).toString();
 
 		if (this.videoA.hasVideo) {
 			const startATime = this.videoA.timeAtFrame(this.videoA.startFrame);
 			const endATime = this.videoA.timeAtFrame(this.videoA.endFrame);
-			this.startA.textContent = fmt(startATime);
-			this.endA.textContent = fmt(endATime);
-			this.durationA.textContent = fmt(endATime - startATime);
+			this.startA.textContent = format(startATime);
+			this.endA.textContent = format(endATime);
+			this.durationA.textContent = format(endATime - startATime);
 		} else {
 			this.startA.textContent = "-";
 			this.endA.textContent = "-";
@@ -566,9 +572,9 @@ class SyncEditor {
 		if (this.videoB.hasVideo) {
 			const startBTime = this.videoB.timeAtFrame(this.videoB.startFrame);
 			const endBTime = this.videoB.timeAtFrame(this.videoB.endFrame);
-			this.startB.textContent = fmt(startBTime);
-			this.endB.textContent = fmt(endBTime);
-			this.durationB.textContent = fmt(endBTime - startBTime);
+			this.startB.textContent = format(startBTime);
+			this.endB.textContent = format(endBTime);
+			this.durationB.textContent = format(endBTime - startBTime);
 		} else {
 			this.startB.textContent = "-";
 			this.endB.textContent = "-";
