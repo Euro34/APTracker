@@ -60,6 +60,8 @@
     display: none;
     background: var(--background1-color);
     inset: 0;
+    overflow-x: scroll;
+    padding-bottom: 100px;
 }
 
 .SyncEditor.active {

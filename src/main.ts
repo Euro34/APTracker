@@ -80,3 +80,4 @@ class APTracker {
 
 
 export let apTracker = new APTracker();
+// Add info: Play Both don't sync on Safari
