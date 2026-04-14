@@ -1,0 +1,45 @@
+#loading-screen {
+    position: fixed;
+    top: 60px; 
+    left: 0;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center; 
+    width: 100%; 
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    gap: 20px;
+}
+
+#loading-screen.active.show {
+    display: flex;
+}
+
+#loading-screen .progress {
+    display: flex;
+    padding-left: 40px;
+    align-items: center;
+    gap: 20px;
+}
+
+.loading-bar {
+    overflow: hidden;
+    width: 400px;
+    max-width: 400px;
+    height: 15px; 
+    border-radius: 10px; 
+    background: var(--background2-color);
+}
+
+#loading-fill {
+    width: var(--level); 
+    height: 100%;
+    border-radius: 10px; 
+    background: var(--accent2-color);
+}
+
+#loading-text {
+    width: 60px;
+}

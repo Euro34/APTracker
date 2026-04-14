@@ -16,6 +16,7 @@
 
         <!-- Style -->
         <link rel="stylesheet" href="src/assets/css/main.css">
+        <link rel="stylesheet" href="src/assets/css/loading_screen.css">
         <link rel="stylesheet" href="src/assets/css/toolbar.css">
         <link rel="stylesheet" href="src/assets/css/workflow.css">
         <link rel="stylesheet" href="src/assets/css/card_container.css">
@@ -279,8 +280,15 @@
             </div>
         </div>
     </body>
-
-    <!-- Sync Editor -->
+    <div id="loading-screen">
+        Extracting frames from videos
+        <div class="progress">
+            <div class="loading-bar">
+                <div id="loading-fill"></div>
+            </div>
+            <p id="loading-text">0%</p>
+        </div>
+    </div>
     <div class="SyncEditor" id="SyncEditor">
         <div class="toolbar">
             <div class="toolbar-left">

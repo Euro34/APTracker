@@ -58,10 +58,11 @@
     position: fixed;
     z-index: 100;
     display: none;
+    overflow-x: scroll;
+    padding-bottom: 50px;
     background: var(--background1-color);
     inset: 0;
-    overflow-x: scroll;
-    padding-bottom: 100px;
+    scrollbar-width: none;
 }
 
 .SyncEditor.active {
@@ -91,13 +92,13 @@
 }
 
 .SyncEditor .video-label {
-    display: flex;
-    justify-content: space-between;
     position: absolute;
     top: 0;
     right: 0;
     left: 0;
+    display: flex;
     overflow: hidden;
+    justify-content: space-between;
     padding: 5px 10px;
     background: rgba(0, 0, 0, 0.5);
     color: #fff;

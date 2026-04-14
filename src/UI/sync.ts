@@ -1,18 +1,15 @@
 import { apTracker } from "../main";
 
 // Card
-const openSyncEditorBtn = document.getElementById("open-sync-editor") as HTMLButtonElement;
-const closeSyncEditorBtn = document.getElementById("close-sync-editor") as HTMLButtonElement;
-
-openSyncEditorBtn.addEventListener("click", () => {
-    const syncEditorContainer = document.querySelector(".SyncEditor") as HTMLDivElement;
-    syncEditorContainer.classList.add("active");
+document.getElementById("open-sync-editor")!.addEventListener("click", () => {
+	document.querySelector(".SyncEditor")!.classList.add("active");
+	document.getElementById("loading-screen")!.classList.add("show");
 });
 
-closeSyncEditorBtn.addEventListener("click", () => {
+document.getElementById("close-sync-editor")!.addEventListener("click", () => {
+    document.querySelector(".SyncEditor")!.classList.remove("active");
+	document.getElementById("loading-screen")!.classList.remove("show");
 	syncEditor.close();
-    const syncEditorContainer = document.querySelector(".SyncEditor") as HTMLDivElement;
-    syncEditorContainer.classList.remove("active");
 });
 
 
