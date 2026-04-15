@@ -15,8 +15,8 @@ export class ReferenceObject {
             new Point_3D(0, 0, 0),
             new Point_3D(width, 0, 0),
             new Point_3D(0, length, 0),
-            new Point_3D(0, 0, height),
             new Point_3D(width, length, 0),
+            new Point_3D(0, 0, height),
             new Point_3D(width, 0, height),
             new Point_3D(0, length, height),
             new Point_3D(width, length, height)

@@ -69,6 +69,11 @@
     display: block;
 }
 
+.SyncEditor .content {
+    display: flex;
+    flex-direction: column;
+}
+
 .SyncEditor .videos-container {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -119,11 +124,6 @@
 }
 
 /* Player Controls */
-.SyncEditor .content {
-    display: flex;
-    flex-direction: column;
-}
-
 .SyncEditor .players-control {
     position: relative;
     display: grid;

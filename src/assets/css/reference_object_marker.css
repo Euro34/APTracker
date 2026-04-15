@@ -1,0 +1,29 @@
+.card#RefCorner .card-header .right button {
+    padding: 5px 15px;
+    border: 1px solid var(--link-border-color);
+    border-radius: 5px;
+    background-color: var(--link-color);
+    color: var(--link-border-color);
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card#RefCorner .card-header .right button:hover {
+    background-color: var(--link-border-color);
+    color: var(--link-color);
+}
+
+.RefObjMarker {
+    position: fixed;
+    z-index: 100;
+    display: none;
+    overflow-x: scroll;
+    padding-bottom: 50px;
+    background: var(--background1-color);
+    inset: 0;
+    scrollbar-width: none;
+}
+
+.RefObjMarker.active {
+    display: block;
+}
