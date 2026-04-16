@@ -18,8 +18,8 @@
 
         <!-- Title -->
         <title>AP Tracker</title>
-      <script type="module" crossorigin src="/APTracker/assets/index-D7BHcnFc.js"></script>
-      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-CCcc3o4d.css">
+      <script type="module" crossorigin src="/APTracker/assets/index-BeFb1QNE.js"></script>
+      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-RFs6XCKl.css">
     </head>
     <body>
         <div class="toolbar">
@@ -300,7 +300,7 @@
                         <div class="name">No video loaded</div>
                         <p class="fpsDisplay">- fps</p>
                     </div>
-                    <video preload="metadata" muted></video>
+                    <video preload="metadata" muted playsinline></video>
                     <div class="empty-video">No video</div>
                 </div>
                 <div class="video-container" id="video-container-B">
@@ -308,7 +308,7 @@
                         <div class="name">No video loaded</div>
                         <p class="fpsDisplay">- fps</p>
                     </div>
-                    <video preload="metadata" muted></video>
+                    <video preload="metadata" muted playsinline></video>
                     <div class="empty-video">No video</div>
                 </div>
             </div>
@@ -396,7 +396,7 @@
             <button id="match-duration">Match duration</button>
         </div>
     </div>
-    <div class="RefObjMarker">
+    <div class="RefObjMarker" id="RefObjMarker">
         <div class="toolbar">
             <div class="toolbar-left">
                 <img id="logo" src="AP_Logo.svg" alt="AP Tracker Logo">
@@ -407,7 +407,39 @@
             </div>
         </div>
         <div class="content">
+            <div class="sidebar" id="refObjMarker-sidebar">
+                <div class="ref-3d-widget" id="ref-3d-widget"></div>
 
+                <div class="corner-selector" id="corner-selector">
+                    <button class="corner-btn selected" data-corner="0" title="Bottom · Front · Left">Bottom · Front · Left</button>
+                    <button class="corner-btn" data-corner="1" title="Bottom · Front · Right">Bottom · Front · Right</button>
+                    <button class="corner-btn" data-corner="2" title="Bottom · Back · Left">Bottom · Back · Left</button>
+                    <button class="corner-btn" data-corner="3" title="Bottom · Back · Right">Bottom · Back · Right</button>
+                    <button class="corner-btn" data-corner="4" title="Top · Front · Left">Top · Front · Left</button>
+                    <button class="corner-btn" data-corner="5" title="Top · Front · Right">Top · Front · Right</button>
+                    <button class="corner-btn" data-corner="6" title="Top · Back · Left">Top · Back · Left</button>
+                    <button class="corner-btn" data-corner="7" title="Top · Back · Right">Top · Back · Right</button>
+                </div>
+
+                <div class="vid-selector" id="vid-selector">
+                    <button class="vid-btn active" id="vid-btn-a" data-vid="a">Camera A</button>
+                    <button class="vid-btn" id="vid-btn-b" data-vid="b">Camera B</button>
+                </div>
+			</div>
+            <div class="ref-viewport" id="ref-viewport">
+                <div class="video-container" id="video-container-ref">
+                    <video id="ref-video" muted playsinline></video>
+                    <canvas id="ref-overlay"></canvas>
+                </div>
+                <div class="empty-video">No video</div>
+                <div class="player">
+                    <button class="play">▶&#xFE0E;</button>
+                    <div class="playBar">
+                        <div class="playhead"></div>
+                    </div>
+                    <div class="time">00:00/00:00</div>
+                </div>
+            </div>
         </div>
     </div>
 
