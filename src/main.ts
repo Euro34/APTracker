@@ -8,14 +8,16 @@ import {} from "./UI/reference_object_dimension";
 import { refObjMarker } from "./UI/reference_object_marker";
 
 class APTracker {
-    uploadedVideos: File[] = [];
-    frameTimestamps: number[][] = [];
-    trimStates: (number | null)[] = []; // [start1, end1, start2, end2] (in frames)
-    referenceObject: ReferenceObject | null = null;
-    referenceCorners: (Point2D | null)[][] = [];
-    projectionMatrix: number[][] = [];
+    public uploadedVideos: File[] = [];
+    public frameTimestamps: number[][] = [];
+    public trimStates: (number | null)[] = []; // [start1, end1, start2, end2] (in frames)
+    public referenceObject: ReferenceObject | null = null;
+    public referenceCorners: (Point2D | null)[][] = [];
+    public projectionMatrix: number[][] = [];
 
-    updateVideos(videos: File[]) {
+    private frameExtractionController: AbortController | null = null;
+
+    public updateVideos(videos: File[]) {
         this.uploadedVideos = videos;
         if (this.uploadedVideos.length === 2) {
             updateStatus("Upload", "done");
@@ -27,17 +29,29 @@ class APTracker {
         this.updateFrameTimestamps();
     }
 
-    async updateFrameTimestamps() {
+    public async updateFrameTimestamps() {
+        if (this.frameExtractionController) {
+            this.frameExtractionController.abort(this.uploadedVideos);
+        }
+
+        this.frameExtractionController = new AbortController();
+        const { signal } = this.frameExtractionController;
+        
         try {
-            this.frameTimestamps = await extractAllFrameTimestamps(this.uploadedVideos);
+            this.frameTimestamps = await extractAllFrameTimestamps(this.uploadedVideos, signal);
             syncEditor.updateVideos(this.uploadedVideos, this.frameTimestamps);
-        } catch (error) {
+            console.log("Extracted frame timestamps:", this.frameTimestamps);
+        } catch (error: any) {
             this.frameTimestamps = [];
-            console.error("Error extracting frame timestamps:", error);
+            if (error.name === 'AbortError') {
+                console.log("Previous extraction cancelled.");
+            } else {
+                console.error("Error extracting frame timestamps:", error);
+            }
         }
     }
 
-    updateSync(trimStates: (number[] | null)[]) {
+    public updateSync(trimStates: (number[] | null)[]) {
         
         const [trim1, trim2, durations] = trimStates;
         const [start1, end1] = trim1 ?? [null, null];
@@ -55,10 +69,9 @@ class APTracker {
         }
         
         refObjMarker.updateVideo(this.uploadedVideos, this.frameTimestamps, this.trimStates);
-        console.log("Updating trim states:", this.trimStates);
     }
 
-    updateReferenceObject(width: number | null, length: number | null, height: number | null) {
+    public updateReferenceObject(width: number | null, length: number | null, height: number | null) {
         let nullCount = 0;
         if (Number.isNaN(width)) nullCount++;
         if (Number.isNaN(length)) nullCount++;
@@ -80,7 +93,7 @@ class APTracker {
         console.log("Updated reference object:", this.referenceObject);
     }
 
-    updateReferenceCorners(referenceCorners: (Point2D | null)[][]) {
+    public updateReferenceCorners(referenceCorners: (Point2D | null)[][]) {
         this.referenceCorners = referenceCorners;
 
         let markedCount = [0, 0];
