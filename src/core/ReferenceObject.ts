@@ -1,31 +1,31 @@
-import { Point_3D, Point_2D } from './Types';
+import { Point3D, Point2D } from './Types';
 import { Matrix, SingularValueDecomposition } from 'ml-matrix';
 
 export class ReferenceObject {
     public width: number;
     public length: number;
     public height: number;
-    public corners_list: Point_3D[];
+    public corners_list: Point3D[];
 
     constructor(width: number, length: number, height: number) {
         this.width = width;
         this.length = length;
         this.height = height;
         this.corners_list = [
-            new Point_3D(0, 0, 0),
-            new Point_3D(width, 0, 0),
-            new Point_3D(0, length, 0),
-            new Point_3D(width, length, 0),
-            new Point_3D(0, 0, height),
-            new Point_3D(width, 0, height),
-            new Point_3D(0, length, height),
-            new Point_3D(width, length, height)
+            new Point3D(0, 0, 0),
+            new Point3D(width, 0, 0),
+            new Point3D(0, length, 0),
+            new Point3D(width, length, 0),
+            new Point3D(0, 0, height),
+            new Point3D(width, 0, height),
+            new Point3D(0, length, height),
+            new Point3D(width, length, height)
         ];
     }
 
-    private matchCornersToImagePoints(image_2D_points: Array<Point_2D | null>): [Point_2D[], Point_3D[]] {
-        const matched_image_points: Point_2D[] = [];
-        const matched_world_points: Point_3D[] = [];
+    private matchCornersToImagePoints(image_2D_points: Array<Point2D | null>): [Point2D[], Point3D[]] {
+        const matched_image_points: Point2D[] = [];
+        const matched_world_points: Point3D[] = [];
 
         for (const [i, point] of image_2D_points.entries()) {
             if (point !== null) {
@@ -37,7 +37,7 @@ export class ReferenceObject {
     }
 
 
-    public calculateProjectionMatrix(image_2D_points: Array<Point_2D | null>): Matrix {
+    public calculateProjectionMatrix(image_2D_points: Array<Point2D | null>): Matrix {
         const [image_points, world_points] = this.matchCornersToImagePoints(image_2D_points);
         if (image_points.length !== world_points.length || image_points.length < 6) {
             throw new Error("There must be at least 6 point correspondences for a 3x4 matrix.");

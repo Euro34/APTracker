@@ -1,4 +1,4 @@
-export class Point_3D {
+export class Point3D {
     x: number;
     y: number;
     z: number;
@@ -10,11 +10,11 @@ export class Point_3D {
     }
 
     toString(): string {
-        return `Point_3D: x=${this.x}, y=${this.y}, z=${this.z}`;
+        return `Point3D: x=${this.x}, y=${this.y}, z=${this.z}`;
     }
 }
 
-export class Point_2D {
+export class Point2D {
     x: number;
     y: number;
 
@@ -26,6 +26,6 @@ export class Point_2D {
     toString(): string {
         const xStr = this.x === undefined ? 'uninitialized' : String(this.x);
         const yStr = this.y === undefined ? 'uninitialized' : String(this.y);
-        return `Point_2D: x=${xStr}, y=${yStr}`;
+        return `Point2D: x=${xStr}, y=${yStr}`;
     }
 }

@@ -1,6 +1,8 @@
-import {Point_2D} from '../core/Types'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+import { Point2D } from '../core/Types'
+import { PanZoom } from '../core/PanZoom';
 
 import { apTracker } from '../main';
 
@@ -37,19 +39,22 @@ function cornerThreeColor(index: number): THREE.Color {
 class VideoState {
     public file: File = new File([], '');
 	public frameTimestamps: number[] = [];
-	public marks: Array<Point_2D | null> = Array(8).fill(null);
+	public marks: (Point2D | null)[] = Array(8).fill(null);
 	public startFrame = 0;
 	public endFrame = 0;
+	public currentTime = 0;
 
-    get hasVideo(): boolean {
-		return this.file.name !== '';
-	}
+    get hasVideo(): boolean { return this.file.size > 0 && this.frameTimestamps.length > 0; }
+	get startTime(): number { return this.frameTimestamps[this.startFrame] ?? 0; }
+	get endTime(): number { return this.frameTimestamps[this.endFrame] ?? 0; }
+	get duration(): number { return this.endTime - this.startTime; }
 
-    public updateVideo(file: File, timestamps: number[], startFrame = 0, endFrame = 0, marks: Array<Point_2D | null> = Array(8).fill(null)) {
+    public updateVideo(file: File, timestamps: number[], startFrame = 0, endFrame = 0, currentTime : number | null = null, marks: (Point2D | null)[] = Array(8).fill(null)) {
 		this.file = file;
 		this.frameTimestamps = timestamps;
 		this.startFrame = startFrame;
-		this.endFrame = endFrame
+		this.endFrame = endFrame;
+		this.currentTime = currentTime ?? this.startTime;
 		this.marks = marks;
 	}
 
@@ -61,11 +66,11 @@ class VideoState {
 		this.endFrame = 0;
 	}
 
-    public getPoints(): Array<Point_2D | null> {
+    public getPoints(): Array<Point2D | null> {
 		return [...this.marks];
 	}
 
-	public setMark(cornerIndex: number, point: Point_2D): void {
+	public setMark(cornerIndex: number, point: Point2D): void {
 		this.marks[cornerIndex] = point;
 	}
 
@@ -78,9 +83,175 @@ class VideoState {
 	}
 }
 
-// One video, marking and pan/zoom
-class VideoMarker {
-	public selectedCorner = 0;
+// One video and marking
+class VideoManager {
+	private viewPort = document.getElementById("ref-viewport") as HTMLDivElement;
+	private container = document.getElementById("video-container-ref") as HTMLDivElement;
+	private video = document.getElementById("ref-video") as HTMLVideoElement;
+	private overlay = document.getElementById("ref-overlay") as HTMLCanvasElement;
+
+	private playBtn = this.viewPort.querySelector(".play") as HTMLButtonElement;
+	private playBar = this.viewPort.querySelector(".play-bar") as HTMLDivElement;
+	private playhead = this.viewPort.querySelector(".playhead") as HTMLDivElement;
+	private timeDisplay = this.viewPort.querySelector(".time") as HTMLDivElement;
+
+	private isScrubbing = false;
+	private wasPlayingBeforeScrub = false;
+
+	private selectedCorner = 0;
+	private videoState: VideoState;
+
+	private panZoom = new PanZoom(this.viewPort, this.container, this.video, this.overlay);
+
+	constructor(state: VideoState) {
+		this.videoState = state;
+
+		this.playBtn.addEventListener('click', () => this.togglePlay());
+		this.video.addEventListener('timeupdate', () => this.updatePlayhead());
+
+		this.bindScrubEvents();
+
+		this.panZoom.onLeftClick = (pos) => {
+			if (!this.videoState.hasVideo) return;
+			this.videoState.marks[this.selectedCorner] = pos;
+			this.redrawMarks();
+		};
+		this.panZoom.onRightClick = (_) => {
+			if (!this.videoState.hasVideo) return;
+			this.videoState.marks[this.selectedCorner] = null;
+			this.redrawMarks();
+		};
+	}
+
+	public updateSelectedCorner(index: number): void {
+		this.selectedCorner = index;
+		this.redrawMarks();
+	}
+	
+	public updateVideoState(videoState: VideoState): void {
+		this.videoState = videoState;
+		const url = URL.createObjectURL(videoState.file);
+
+		this.pause();
+		this.video.src = url;
+		this.video.load();
+
+		this.video.currentTime = videoState.currentTime;
+
+		if (videoState.hasVideo) {
+			this.viewPort.classList.add('video-loaded');
+		} else {
+			this.viewPort.classList.remove('video-loaded');
+		}
+
+		this.panZoom.resetView();
+		this.updatePlayhead();
+	}
+
+	private togglePlay(): void {
+		if (!this.videoState.hasVideo) return;
+		if (this.video.paused) {
+			this.play();
+		} else {
+			this.pause();
+		}
+	}
+
+	private play() {
+		this.video.play();
+		this.updatePlayBtn(true);
+	}
+
+	private pause() {
+		this.video.pause();
+		this.updatePlayBtn(false);
+	}
+
+	private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
+
+	private updatePlayhead(): void {
+		this.videoState.currentTime = this.video.currentTime;
+		const currentTime = this.video.currentTime - this.videoState.startTime;
+		const duration = this.videoState.duration;
+		if (duration > 0) {
+			const progress = (currentTime - this.videoState.startTime) / duration;
+			this.playhead.style.left = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
+			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.videoState.endTime)}`;
+		} else {
+			this.playhead.style.left = '0%';
+			this.timeDisplay.textContent = `00:00 / 00:00`;
+		}
+		if (currentTime >= this.videoState.endTime) {
+			this.pause();
+			this.video.currentTime = this.videoState.startTime;
+		}
+	}
+
+	private formatTime(seconds: number): string {
+		const mins = Math.floor(seconds / 60);
+		const secs = Math.floor(seconds % 60);
+		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+	}
+
+	private bindScrubEvents(): void {
+		this.playBar.addEventListener("mousedown", (e) => {
+			if (!this.videoState.hasVideo) return;
+			this.isScrubbing = true;
+			this.wasPlayingBeforeScrub = !this.video.paused;
+			this.pause();
+			this.scrubToEvent(e);
+			e.preventDefault();
+		});
+
+		window.addEventListener("mousemove", (e) => {
+			if (!this.isScrubbing) return;
+			this.scrubToEvent(e);
+		});
+
+		window.addEventListener("mouseup", () => {
+			if (!this.isScrubbing) return;
+			this.isScrubbing = false;
+			if (this.wasPlayingBeforeScrub) this.play();
+		});
+
+	}
+
+	private scrubToEvent(e: MouseEvent): void {
+		const rect = this.playBar.getBoundingClientRect();
+		const progress = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+		const newTime = this.videoState.startTime + progress * this.videoState.duration;
+		this.video.currentTime = newTime;
+		// Update playhead immediately
+		this.playhead.style.left = `${progress * 100}%`;
+	}
+
+	public redrawMarks(): void {
+		const ctx = this.overlay.getContext('2d')!;
+		const W = this.overlay.width;
+		const H = this.overlay.height;
+		ctx.clearRect(0, 0, W, H);
+
+		for (let i = 0; i < 8; i++) {
+			const mark = this.videoState.marks[i];
+			if (!mark) continue;
+
+			const cx = mark.x * W;
+			const cy = mark.y * H;
+			const { r, g, b } = cornerColor(i);
+			const radius = i === this.selectedCorner ? 7 : 5;
+
+			ctx.beginPath();
+			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+			ctx.fillStyle = `rgba(${r},${g},${b},0.5)`;
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+			ctx.strokeStyle = 'rgba(0,0,0,0.8)';
+			ctx.lineWidth = 1.5;
+			ctx.stroke();
+		}
+	}
 }
 
 class Ref3DWidget {
@@ -237,35 +408,35 @@ class Ref3DWidget {
 class RefObjMarker {
 	private fileCache: Map<string, { file: File; timestamps: number[] }> = new Map();
 
-	// private activeVideo: 'a' | 'b' = 'a';
 	private videoA = new VideoState();
 	private videoB = new VideoState();
 
-	private refMarkerVideo = new VideoMarker();
+	private refMarkerVideo = new VideoManager(this.videoA);
 
-    private widget: Ref3DWidget | null = null;
-	private corner_btn: NodeListOf<HTMLButtonElement>;
-	private vid_a_btn: HTMLButtonElement;
-	private vid_b_btn: HTMLButtonElement;
+    private widget: Ref3DWidget;
+	private cornerBtn: NodeListOf<HTMLButtonElement>;
+	private vidABtn: HTMLButtonElement;
+	private vidBBtn: HTMLButtonElement;
 
     constructor() {
-		setTimeout(() => {this.widget = new Ref3DWidget();}, 200);
+		this.widget = new Ref3DWidget();
 
-		this.corner_btn = document.querySelectorAll<HTMLButtonElement>(".corner-btn")
-		this.corner_btn.forEach(btn => {
+		this.cornerBtn = document.querySelectorAll<HTMLButtonElement>(".corner-btn")
+		this.cornerBtn.forEach(btn => {
 			btn.addEventListener('click', () => {
 				const idx = parseInt(btn.dataset.corner ?? '-1', 10);
 				this.selectCorner(idx);
 			});
 		});
-		this.vid_a_btn = document.getElementById("vid-btn-a") as HTMLButtonElement;
-		this.vid_b_btn = document.getElementById("vid-btn-b") as HTMLButtonElement;
-		this.vid_a_btn.addEventListener('click', () => this.selectVideo('a'));
-		this.vid_a_btn.setAttribute("disabled", "true");
-		this.vid_a_btn.classList.add("disabled");
-		this.vid_b_btn.addEventListener('click', () => this.selectVideo('b'));
-		this.vid_b_btn.setAttribute("disabled", "true");
-		this.vid_b_btn.classList.add("disabled");
+
+		this.vidABtn = document.getElementById("vid-btn-a") as HTMLButtonElement;
+		this.vidBBtn = document.getElementById("vid-btn-b") as HTMLButtonElement;
+		this.vidABtn.addEventListener('click', () => this.selectVideo('a'));
+		this.vidABtn.setAttribute("disabled", "true");
+		this.vidABtn.classList.add("disabled");
+		this.vidBBtn.addEventListener('click', () => this.selectVideo('b'));
+		this.vidBBtn.setAttribute("disabled", "true");
+		this.vidBBtn.classList.add("disabled");
 	}
 
 	public updateVideo(files: File[], frameTimestamps: number[][], trimState: (number|null)[]) {
@@ -285,14 +456,14 @@ class RefObjMarker {
 		const aStillPresent = this.videoA.file.name !== "" && this.fileCache.has(this.videoA.file.name);
 		const bStillPresent = this.videoB.file.name !== "" && this.fileCache.has(this.videoB.file.name);
 
-		const bTrimSnapshot = bStillPresent ? { startFrame: this.videoB.startFrame, endFrame: this.videoB.endFrame,  marks: this.videoB.marks}: null;
+		const bTrimSnapshot = bStillPresent ? { startFrame: this.videoB.startFrame, endFrame: this.videoB.endFrame, currentTime: this.videoB.currentTime,  marks: this.videoB.marks}: null;
 
 		if (!aStillPresent) this.videoA.reset();
 		if (!bStillPresent) this.videoB.reset();
 
 		// Shift B -> A
 		if (!this.videoA.hasVideo && this.videoB.hasVideo && bTrimSnapshot) {
-			this.videoA.updateVideo(this.videoB.file, this.videoB.frameTimestamps, bTrimSnapshot.startFrame, bTrimSnapshot.endFrame, bTrimSnapshot.marks);
+			this.videoA.updateVideo(this.videoB.file, this.videoB.frameTimestamps, bTrimSnapshot.startFrame, bTrimSnapshot.endFrame, bTrimSnapshot.currentTime, bTrimSnapshot.marks);
 			this.videoB.reset();
 		}
 
@@ -303,18 +474,24 @@ class RefObjMarker {
 			if (!this.videoA.hasVideo) {
 				this.videoA.updateVideo(data.file, data.timestamps, trimState[0] ?? 0, trimState[1] ?? 0);
 			} else if (!this.videoB.hasVideo) {
-				this.videoB.updateVideo(data.file, data.timestamps, trimState[1] ?? 0, trimState[2] ?? 0);
+				this.videoB.updateVideo(data.file, data.timestamps, trimState[2] ?? 0, trimState[3] ?? 0);
 			}
 		}
 
 		this.selectVideo('a');
 		if (this.videoA.hasVideo) {
-			this.vid_a_btn.removeAttribute("disabled");
-			this.vid_a_btn.classList.remove("disabled");
+			this.vidABtn.removeAttribute("disabled");
+			this.vidABtn.classList.remove("disabled");
+		} else {
+			this.vidABtn.setAttribute("disabled", "true");
+			this.vidABtn.classList.add("disabled");
 		}
 		if (this.videoB.hasVideo) {
-			this.vid_b_btn.removeAttribute("disabled");
-			this.vid_b_btn.classList.remove("disabled");
+			this.vidBBtn.removeAttribute("disabled");
+			this.vidBBtn.classList.remove("disabled");
+		} else {
+			this.vidBBtn.setAttribute("disabled", "true");
+			this.vidBBtn.classList.add("disabled");
 		}
 	}
 
@@ -323,27 +500,27 @@ class RefObjMarker {
     }
 
 	private selectCorner(index: number): void {
-		this.corner_btn.forEach(btn => {btn.classList.remove("selected")});
-		this.corner_btn[index].classList.add("selected");
+		this.cornerBtn.forEach(btn => {btn.classList.remove("selected")});
+		this.cornerBtn[index].classList.add("selected");
 
 		this.widget!.setSelectedCorner(index);
-		this.refMarkerVideo.selectedCorner = index;
+		this.refMarkerVideo.updateSelectedCorner(index);
 	}
 
 	private selectVideo(video: 'a' | 'b'): void {
-		// this.activeVideo = video;
 		if (video === 'a') {
-			this.vid_a_btn.classList.add("active");
-			this.vid_b_btn.classList.remove("active");
+			this.vidABtn.classList.add("active");
+			this.vidBBtn.classList.remove("active");
+			this.refMarkerVideo.updateVideoState(this.videoA);
 		} else {
-			this.vid_b_btn.classList.add("active");
-			this.vid_a_btn.classList.remove("active");
+			this.vidBBtn.classList.add("active");
+			this.vidABtn.classList.remove("active");
+			this.refMarkerVideo.updateVideoState(this.videoB);
 		}
 	}
 
 	public close() {
-		const temp: Point_2D[][] = [];
-		apTracker.updateReferenceCorners(temp);
+		apTracker.updateReferenceCorners([this.videoA.getPoints(), this.videoB.getPoints()]);
 	}
 }
 

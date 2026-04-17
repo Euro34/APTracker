@@ -163,21 +163,23 @@
 }
 
 /* Crosshair cursor only when hovering viewport */
-.ref-viewport {
+.ref-viewport.video-loaded {
 	cursor: crosshair;
 }
 
 .video-container {
 	position: relative;
+	z-index: 5;
 	display: inline-block;
 	/* size controlled by JS based on zoom/pan */
 }
 
 .video-container video {
-	z-index: 5;
 	display: block;
 	max-width: none;
 	max-height: none;
+	z-index: 8;
+	dynamic-range-limit: standard;
 	/* width/height set by JS */
 }
 
@@ -192,6 +194,7 @@
 
 .ref-viewport .empty-video {
 	position: absolute;
+	z-index: 1;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -218,15 +221,43 @@
 }
 
 .RefObjMarker .player button{
+	width: 45px;
 	padding: 5px 15px;
 	border: 1px solid var(--border-color);
 	border-radius: 5px;
 	background-color: var(--background3-color);
 	font-size: var(--text-xxs);
+	text-align: center;
 	cursor: pointer;
 	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .RefObjMarker .player button:hover {
 	background-color: var(--border-color);
+}
+
+.RefObjMarker .play-bar {
+	position: relative;
+	flex: 1;
+	height: 5px;
+	margin: 0 15px;
+	border-radius: 2.5px;
+	background-color: var(--border-color);
+}
+
+.RefObjMarker .play-bar .playhead {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	background-color: var(--accent1-color);
+	cursor: ew-resize;
+	transform: translate(-50%, -50%);
+}
+
+.RefObjMarker .time {
+	width: 120px;
+	text-align: center;
 }

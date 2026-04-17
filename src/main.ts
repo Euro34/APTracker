@@ -1,4 +1,4 @@
-import { Point_2D } from "./core/Types";
+import { Point2D } from "./core/Types";
 import { ReferenceObject } from "./core/ReferenceObject";
 
 import { updateStatus } from "./UI/workflow";
@@ -12,7 +12,7 @@ class APTracker {
     frameTimestamps: number[][] = [];
     trimStates: (number | null)[] = []; // [start1, end1, start2, end2] (in frames)
     referenceObject: ReferenceObject | null = null;
-    referenceCorners: Point_2D[][] = [];
+    referenceCorners: (Point2D | null)[][] = [];
 
     updateVideos(videos: File[]) {
         this.uploadedVideos = videos;
@@ -80,8 +80,24 @@ class APTracker {
         console.log("Updated reference object:", this.referenceObject);
     }
 
-    updateReferenceCorners(referenceCorners: Point_2D[][]) {
+    updateReferenceCorners(referenceCorners: (Point2D | null)[][]) {
         this.referenceCorners = referenceCorners;
+
+        let markedCount = [0, 0];
+        referenceCorners.forEach((video, index) => {
+            video.forEach((corner) => {
+                if (corner !== null) markedCount[index]++;
+            });
+        });
+        if (markedCount[0] >= 6 && markedCount[1] >= 6) {
+            updateStatus("RefCorner", "done");
+        } else if (markedCount[0] > 0 || markedCount[1] > 0) {
+            updateStatus("RefCorner", "inprogress");
+        } else {
+            updateStatus("RefCorner", "");
+        }
+
+
         console.log("Updated reference corners:", this.referenceCorners);
     }
 }

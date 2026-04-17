@@ -315,7 +315,6 @@ class VideoHandler {
 
 		this.trimSelection.style.setProperty("--start", `${startPct}%`);
 		this.trimSelection.style.setProperty("--end", `${endPct}%`);
-		// this.movePlayhead()
 ;
         this.durationDisplay.textContent = `Duration: ${this.duration.toFixed(3)} s`;
 	}
