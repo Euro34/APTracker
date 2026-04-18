@@ -53,24 +53,18 @@ class VideoState {
 		this.marks = marks;
 	}
 
+	public updateTrim(startFrame: number, endFrame: number) {
+		this.startFrame = startFrame;
+		this.endFrame = endFrame;
+		this.currentTime = Math.max(this.currentTime, this.startTime);
+	}
+
     public reset() {
 		this.file = new File([], '');
 		this.frameTimestamps = [];
 		this.marks = Array(8).fill(null);
 		this.startFrame = 0;
 		this.endFrame = 0;
-	}
-
-    public getPoints(): (Point2D | null)[] {
-		return this.marks;
-	}
-
-	public setMark(cornerIndex: number, point: Point2D) {
-		this.marks[cornerIndex] = point;
-	}
-
-	public removeMark(cornerIndex: number) {
-		this.marks[cornerIndex] = null;
 	}
 }
 
@@ -95,6 +89,7 @@ class VideoManager {
 	private videoState: VideoState;
 
 	private panZoom = new PanZoom(this.viewPort, this.container, this.video, this.overlay);
+	private readonly dotRadius = 3.5;
 
 	constructor(state: VideoState) {
 		this.videoState = state;
@@ -108,7 +103,7 @@ class VideoManager {
 
 		this.panZoom.onLeftClick = (pos) => {
 			if (!this.videoState.hasVideo) return;
-			this.videoState.setMark(this.selectedCorner, pos);
+			this.videoState.marks[this.selectedCorner] = pos;
 			this.drawMarks();
 		};
 		this.panZoom.onMiddleClick = (pos) => {
@@ -130,22 +125,22 @@ class VideoManager {
 		this.videoState = videoState;
 		const url = URL.createObjectURL(videoState.file);
 
-		this.pause();
-		this.video.src = url;
-		this.video.currentTime = videoState.currentTime;
-		this.video.load();
-		this.updatePlayhead();
-
 		if (videoState.hasVideo) {
+			this.video.src = url;
 			this.viewPort.classList.add('video-loaded');
 		} else {
 			this.viewPort.classList.remove('video-loaded');
 		}
-		
 
-		this.panZoom.fitCanvasToVideo();
-		this.drawMarks();
-		setTimeout(() => this.panZoom.resetView(), 200);
+		this.pause();
+		
+		this.video.addEventListener('loadedmetadata', () => {
+			this.video.currentTime = videoState.currentTime;
+			this.updatePlayhead();		
+			setTimeout(() => {this.panZoom.resetView();}, 500);
+			this.panZoom.fitCanvasToVideo();
+			this.drawMarks();
+		});
 	}
 
 	private togglePlay(): void {
@@ -174,23 +169,25 @@ class VideoManager {
 		const currentTime = this.video.currentTime - this.videoState.startTime;
 		const duration = this.videoState.duration;
 		if (duration > 0) {
-			const progress = (currentTime - this.videoState.startTime) / duration;
+			const progress = currentTime / duration;
 			this.playhead.style.left = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
-			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.videoState.endTime)}`;
+			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.videoState.duration)}`;
 		} else {
 			this.playhead.style.left = '0%';
-			this.timeDisplay.textContent = `00:00 / 00:00`;
+			this.timeDisplay.textContent = `0.00 / 0.00`;
 		}
-		if (currentTime >= this.videoState.endTime) {
+		if (currentTime >= duration) {
 			this.pause();
+			this.video.currentTime = this.videoState.startTime;
+		}
+		if (currentTime < 0) {
 			this.video.currentTime = this.videoState.startTime;
 		}
 	}
 
 	private formatTime(seconds: number): string {
-		const mins = Math.floor(seconds / 60);
-		const secs = Math.floor(seconds % 60);
-		return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+		const secs = seconds;
+		return `${secs.toFixed(2).toString().padStart(2, '0')}`;
 	}
 
 	private bindScrubEvents(): void {
@@ -229,7 +226,7 @@ class VideoManager {
 		const ctx = this.overlay.getContext('2d')!;
 		const W = this.overlay.width;
 		const H = this.overlay.height;
-		const S = this.panZoom.OVERLAY_SCALE; // e.g. 2
+		const S = this.panZoom.OVERLAY_SCALE;
 		ctx.clearRect(0, 0, W, H);
 
 		for (let i = 0; i < 8; i++) {
@@ -239,7 +236,7 @@ class VideoManager {
 			const cx = mark.x * W;
 			const cy = mark.y * H;
 			const { r, g, b } = cornerColor(i);
-			const radius = (i === this.selectedCorner ? 7 : 5) * S; // scale radius too
+			const radius = (i === this.selectedCorner ? this.dotRadius * 1.5 : this.dotRadius) * S; // scale radius too
 
 			ctx.beginPath();
 			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
@@ -260,7 +257,7 @@ class VideoManager {
 		this.videoState.marks.forEach((mark, index) => {
 			if (!mark) return;
 
-			const dotRadiusPx = 7 * S;
+			const dotRadiusPx = this.dotRadius * 1.5 * S;
 
 			const normRadiusX = dotRadiusPx / this.overlay.width;
 			const normRadiusY = dotRadiusPx / this.overlay.height;
@@ -274,7 +271,7 @@ class VideoManager {
 	}
 
 	private deleteMark(index: number) {
-		this.videoState.removeMark(index);
+		this.videoState.marks[index] = null;
 		this.drawMarks();
 	}
 }
@@ -449,7 +446,7 @@ class RefObjMarker {
 		this.cornerBtn = document.querySelectorAll<HTMLButtonElement>(".corner-btn")
 		this.cornerBtn.forEach(btn => {
 			btn.addEventListener('click', () => {
-				const idx = parseInt(btn.dataset.corner ?? '-1', 10);
+				const idx = parseInt(btn.dataset.corner!);
 				this.selectCorner(idx);
 			});
 		});
@@ -483,8 +480,16 @@ class RefObjMarker {
 
 		const bStateSnapshot = bStillPresent ? { currentTime: this.videoB.currentTime,  marks: this.videoB.marks}: null;
 
-		if (!aStillPresent) this.videoA.reset();
-		if (!bStillPresent) this.videoB.reset();
+		if (!aStillPresent) {
+			this.videoA.reset();
+		} else {
+			this.videoA.updateTrim(trimState[0] ?? 0, trimState[1] ?? 0);
+		}
+		if (!bStillPresent) {
+			this.videoB.reset();
+		} else {
+			this.videoB.updateTrim(trimState[2] ?? 0, trimState[3] ?? 0);
+		}
 
 		// Shift B -> A
 		if (!this.videoA.hasVideo && this.videoB.hasVideo && bStateSnapshot) {
@@ -547,7 +552,7 @@ class RefObjMarker {
 	}
 
 	public updateMain() {
-		apTracker.updateReferenceCorners([this.videoA.getPoints(), this.videoB.getPoints()]);
+		apTracker.updateReferenceCorners([this.videoA.marks, this.videoB.marks]);
 	}
 }
 

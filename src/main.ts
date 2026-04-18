@@ -40,7 +40,6 @@ class APTracker {
         try {
             this.frameTimestamps = await extractAllFrameTimestamps(this.uploadedVideos, signal);
             syncEditor.updateVideos(this.uploadedVideos, this.frameTimestamps);
-            console.log("Extracted frame timestamps:", this.frameTimestamps);
         } catch (error: any) {
             this.frameTimestamps = [];
             if (error.name === 'AbortError') {
@@ -62,7 +61,7 @@ class APTracker {
         
         if (!trim1 || !trim2 || !durations) {
             updateStatus("Sync", "");
-        } else if (Math.abs(duration1! - duration2!) < 0.05) {    // Allow tolerance of 50ms
+        } else if (Math.abs(duration1! - duration2!) < 0.05) {// Allow tolerance of 50ms
             updateStatus("Sync", "done");
         } else {
             updateStatus("Sync", "inprogress");
@@ -90,7 +89,6 @@ class APTracker {
         }
 
         refObjMarker.updateBoxDimensions(width, length, height);
-        console.log("Updated reference object:", this.referenceObject);
     }
 
     public updateReferenceCorners(referenceCorners: (Point2D | null)[][]) {
@@ -109,8 +107,6 @@ class APTracker {
         } else {
             updateStatus("RefCorner", "");
         }
-
-        console.log("Updated reference corners:", this.referenceCorners);
     }
 }
 

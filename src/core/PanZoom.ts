@@ -25,6 +25,7 @@ export class PanZoom {
 	public onRightClick?: (pos: { x: number; y: number }) => void;
     public onRedraw?: () => void;
     public onScroll?: () => void;
+    public onMouseMove?: (pos: { x: number; y: number } | null) => void;
 
 	constructor(viewPort: HTMLElement, container: HTMLElement, content: HTMLVideoElement, overlay: HTMLCanvasElement) {
 		this.viewPort = viewPort;
@@ -45,6 +46,7 @@ export class PanZoom {
 		// Track normalized mouse position whenever cursor moves over viewport
 		this.viewPort.addEventListener("mousemove", (e) => {
 			this.normMousePos = this.toNorm(e);
+            this.onMouseMove?.(this.normMousePos);
 		});
 		this.viewPort.addEventListener("mouseleave", () => {
 			this.normMousePos = null;
@@ -70,7 +72,7 @@ export class PanZoom {
 		// Scroll wheel — zoom toward cursor
 		this.viewPort.addEventListener("wheel", (e) => {
 			e.preventDefault();
-			const factor = e.deltaY < 0 ? 1.05 : 0.95;
+			const factor = -e.deltaY/1000 + 1;
 			const newZoom = Math.min(Math.max(this.zoom * factor, 1), 20);
 
 			const rect = this.viewPort.getBoundingClientRect();
