@@ -53,6 +53,11 @@ export class PanZoom {
 	private bindEvents(): void {
 		// Track normalized mouse position whenever cursor moves over viewport
 		this.viewPort.addEventListener("mousemove", (e) => {
+            if (this.isUIElement(e.target)) {
+                this.normMousePos = null;
+                this.onMouseMove?.(null);
+                return;
+            }
 			this.normMousePos = this.toNorm(e);
             this.onMouseMove?.(this.normMousePos);
 		});
@@ -64,6 +69,7 @@ export class PanZoom {
 		// fire callback with normalized position
 		this.viewPort.addEventListener("mousedown", (e) => {
             const pos = this.toNorm(e);
+            if (this.isUIElement(e.target)) return;
 
             if (e.button === 0) {
                 if (pos) this.onLeftClick?.(pos);
@@ -81,6 +87,7 @@ export class PanZoom {
 		// Scroll wheel — zoom toward cursor
 		this.viewPort.addEventListener("wheel", (e) => {
 			e.preventDefault();
+            if (this.isUIElement(e.target)) return;
 			const factor = -e.deltaY/1000 + 1;
 			const newZoom = Math.min(Math.max(this.zoom * factor, 1), 20);
 
@@ -119,6 +126,11 @@ export class PanZoom {
 			if (e.button === 2) this.isPanning = false;
 		});
 	}
+
+    private isUIElement(target: EventTarget | null): boolean {
+        if (!target || !(target instanceof Element)) return false;
+        return !!target.closest('.player, .delete, button');
+    }
 
 
 	// Private — coordinate helpers
