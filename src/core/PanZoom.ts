@@ -2,7 +2,7 @@ export class PanZoom {
 	private viewPort: HTMLElement;
 	private container: HTMLElement;
 	private content: HTMLVideoElement;
-	private overlay: HTMLCanvasElement;
+	private overlay: HTMLCanvasElement[];
 
     private needsTransform = false;
     public readonly OVERLAY_SCALE = 2;
@@ -25,14 +25,13 @@ export class PanZoom {
     public onMiddleClick?: (pos: { x: number; y: number }) => void;
 	public onRightClick?: (pos: { x: number; y: number }) => void;
     public onRedraw?: () => void;
-    public onScroll?: () => void;
     public onMouseMove?: (pos: { x: number; y: number } | null) => void;
 
-	constructor(viewPort: HTMLElement, container: HTMLElement, content: HTMLVideoElement, overlay: HTMLCanvasElement) {
+	constructor(viewPort: HTMLElement, container: HTMLElement, content: HTMLVideoElement, overlays: HTMLCanvasElement[]) {
 		this.viewPort = viewPort;
 		this.container = container;
 		this.content = content;
-		this.overlay = overlay;
+		this.overlay = overlays;
 		this.bindEvents();
 
         new ResizeObserver(() => {
@@ -59,6 +58,7 @@ export class PanZoom {
 		});
 		this.viewPort.addEventListener("mouseleave", () => {
 			this.normMousePos = null;
+            this.onMouseMove?.(this.normMousePos);
 		});
 
 		// fire callback with normalized position
@@ -93,7 +93,6 @@ export class PanZoom {
 
 			this.clampPan();
 			this.applyTransform();
-            this.onScroll?.();
             this.onRedraw?.();
 		}, { passive: false });
 
@@ -145,8 +144,10 @@ export class PanZoom {
         const vw = this.content.videoWidth;
         const vh = this.content.videoHeight;
         if (!vw || !vh) return;
-        this.overlay.width = vw * this.OVERLAY_SCALE;
-        this.overlay.height = vh * this.OVERLAY_SCALE;
+        for (const canvas of this.overlay) {
+            canvas.width = vw * this.OVERLAY_SCALE;
+            canvas.height = vh * this.OVERLAY_SCALE;
+        }
     }
 
 	private applyTransform(): void {
@@ -169,8 +170,10 @@ export class PanZoom {
         this.content.style.width = `${fitW}px`;
         this.content.style.height = `${fitH}px`;
 
-        this.overlay.style.width = `${fitW}px`;
-        this.overlay.style.height = `${fitH}px`;
+        for (const canvas of this.overlay) {
+            canvas.style.width = `${fitW}px`;
+            canvas.style.height = `${fitH}px`;
+        }
 
         this.container.style.position = 'absolute';
         this.container.style.left = '50%';

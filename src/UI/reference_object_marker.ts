@@ -76,7 +76,9 @@ class VideoManager {
 	private viewPort = document.getElementById("ref-viewport") as HTMLDivElement;
 	private container = document.getElementById("video-container-ref") as HTMLDivElement;
 	private video = document.getElementById("ref-video") as HTMLVideoElement;
-	private overlay = document.getElementById("ref-overlay") as HTMLCanvasElement;
+	private markOverlay = document.getElementById("ref-mark-overlay") as HTMLCanvasElement;
+	private guideOverlay = document.getElementById("ref-guide-overlay") as HTMLCanvasElement;
+	// private boxOverlay = document.getElementById("ref-box-overlay") as HTMLCanvasElement;
 
 	private playBtn = this.viewPort.querySelector(".play") as HTMLButtonElement;
 	private playBar = this.viewPort.querySelector(".play-bar") as HTMLDivElement;
@@ -91,7 +93,7 @@ class VideoManager {
 	private selectedCorner = 0;
 	private videoState: VideoState;
 
-	private panZoom = new PanZoom(this.viewPort, this.container, this.video, this.overlay);
+	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay]);
 	private readonly dotRadius = 3.5;
 
 	constructor(state: VideoState) {
@@ -117,11 +119,16 @@ class VideoManager {
 			if (!this.videoState.hasVideo) return;
 			this.drawMarks();
 		};
+		this.panZoom.onMouseMove = (pos) => {
+			if (!this.videoState.hasVideo) return;
+			this.drawGuideLines(pos);
+		}
 	}
 
 	public updateSelectedCorner(index: number): void {
 		this.selectedCorner = index;
 		this.drawMarks();
+		this.drawGuideLines(null);
 	}
 	
 	public updateVideoState(videoState: VideoState): void {
@@ -226,10 +233,10 @@ class VideoManager {
 		this.playhead.style.left = `${progress * 100}%`;
 	}
 
-	public drawMarks(): void {
-		const ctx = this.overlay.getContext('2d')!;
-		const W = this.overlay.width;
-		const H = this.overlay.height;
+	private drawMarks(): void {
+		const ctx = this.markOverlay.getContext('2d')!;
+		const W = this.markOverlay.width;
+		const H = this.markOverlay.height;
 		const S = this.panZoom.OVERLAY_SCALE;
 		ctx.clearRect(0, 0, W, H);
 
@@ -255,6 +262,50 @@ class VideoManager {
 		}
 	}
 
+	private drawGuideLines(pos: Point2D | null): void {
+		const ctx = this.guideOverlay.getContext('2d')!;
+		const W = this.guideOverlay.width;
+		const H = this.guideOverlay.height;
+		const S = this.panZoom.OVERLAY_SCALE;
+		
+		ctx.clearRect(0, 0, W, H);
+		if (!pos) return;
+		if (this.videoState.marks[this.selectedCorner] !== null) return;
+
+		// x-axis
+		const pointx = this.videoState.marks[this.selectedCorner ^ 1];
+		if (pointx) {
+			ctx.beginPath();
+			ctx.moveTo(pos.x * W, pos.y * H);
+			ctx.lineTo(pointx.x * W, pointx.y * H);
+			ctx.strokeStyle = 'rgba(255,0,0,0.3)';
+			ctx.lineWidth = 1 * S;
+			ctx.stroke();
+		}
+
+		// y-axis
+		const pointy = this.videoState.marks[this.selectedCorner ^ 2];
+		if (pointy) {
+			ctx.beginPath();
+			ctx.moveTo(pos.x * W, pos.y * H);
+			ctx.lineTo(pointy.x * W, pointy.y * H);
+			ctx.strokeStyle = 'rgba(0,255,0,0.3)';
+			ctx.lineWidth = 1 * S;
+			ctx.stroke();
+		}
+
+		// z-axis
+		const pointz = this.videoState.marks[this.selectedCorner ^ 4];
+		if (pointz) {
+			ctx.beginPath();
+			ctx.moveTo(pos.x * W, pos.y * H);
+			ctx.lineTo(pointz.x * W, pointz.y * H);
+			ctx.strokeStyle = 'rgba(0,0,255,0.3)';
+			ctx.lineWidth = 1 * S;
+			ctx.stroke();
+		}
+	}
+
 	private deleteMarkAtPos(pos: Point2D): void {
 		const S = this.panZoom.OVERLAY_SCALE;
 
@@ -263,8 +314,8 @@ class VideoManager {
 
 			const dotRadiusPx = this.dotRadius * 1.5 * S;
 
-			const normRadiusX = dotRadiusPx / this.overlay.width;
-			const normRadiusY = dotRadiusPx / this.overlay.height;
+			const normRadiusX = dotRadiusPx / this.markOverlay.width;
+			const normRadiusY = dotRadiusPx / this.markOverlay.height;
 			const normRadius = (normRadiusX + normRadiusY) / 2;
 
 			const dist = Point2D.distanceBetween(pos, mark);

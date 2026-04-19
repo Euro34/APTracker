@@ -182,7 +182,7 @@
 	/* width/height set by JS */
 }
 
-.video-container canvas#ref-overlay {
+.video-container canvas {
 	position: absolute;
 	top: 0;
 	left: 0;
