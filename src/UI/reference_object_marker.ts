@@ -78,7 +78,7 @@ class VideoManager {
 	private video = document.getElementById("ref-video") as HTMLVideoElement;
 	private markOverlay = document.getElementById("ref-mark-overlay") as HTMLCanvasElement;
 	private guideOverlay = document.getElementById("ref-guide-overlay") as HTMLCanvasElement;
-	// private boxOverlay = document.getElementById("ref-box-overlay") as HTMLCanvasElement;
+	private boxOverlay = document.getElementById("ref-box-overlay") as HTMLCanvasElement;
 
 	private playBtn = this.viewPort.querySelector(".play") as HTMLButtonElement;
 	private playBar = this.viewPort.querySelector(".play-bar") as HTMLDivElement;
@@ -93,7 +93,7 @@ class VideoManager {
 	private selectedCorner = 0;
 	private videoState: VideoState;
 
-	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay]);
+	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay, this.boxOverlay]);
 	private readonly dotRadius = 3.5;
 
 	constructor(state: VideoState) {
@@ -259,6 +259,162 @@ class VideoManager {
 			ctx.strokeStyle = 'rgba(0,0,0,0.8)';
 			ctx.lineWidth = 1.5 * S;
 			ctx.stroke();
+		}
+		this.drawBoxLines();
+	}
+
+	private drawBoxLines(): void {
+		const ctx = this.boxOverlay.getContext('2d')!;
+		const W = this.boxOverlay.width;
+		const H = this.boxOverlay.height;
+		const S = this.panZoom.OVERLAY_SCALE;
+		ctx.clearRect(0, 0, W, H);
+
+		// Edge pairs per axis — each pair is [indexA, indexB] where they differ by one bit
+		const AXIS_EDGES: [number, number][][] = [
+			[[0,1],[2,3],[4,5],[6,7]], // X axis — bit 0
+			[[0,2],[1,3],[4,6],[5,7]], // Y axis — bit 1
+			[[0,4],[1,5],[2,6],[3,7]], // Z axis — bit 2
+		];
+
+		const AXIS_COLORS = [
+			'rgba(255,0,0,',   // X — red
+			'rgba(0,255,0,',   // Y — green
+			'rgba(0,120,255,',  // Z — blue
+		];
+
+		type Vec3 = [number, number, number]; // homogeneous 2D point/line
+
+		function toHomogeneous(p: Point2D, W: number, H: number): Vec3 {
+			return [p.x * W, p.y * H, 1];
+		}
+
+		function cross(a: Vec3, b: Vec3): Vec3 {
+			return [
+				a[1]*b[2] - a[2]*b[1],
+				a[2]*b[0] - a[0]*b[2],
+				a[0]*b[1] - a[1]*b[0],
+			];
+		}
+
+		function lineThrough(p1: Vec3, p2: Vec3): Vec3 {
+			return cross(p1, p2);
+		}
+
+		/** Intersection of two lines in homogeneous coords.
+		 *  Returns null if lines are parallel (w ≈ 0) — vanishing point at infinity. */
+		function intersect(l1: Vec3, l2: Vec3): Point2D | null {
+			const p = cross(l1, l2);
+			if (Math.abs(p[2]) < 1e-9) return null; // parallel
+			return { x: p[0] / p[2], y: p[1] / p[2] };
+		}
+
+		/** Extend a ray from `from` through `through` to the canvas boundary.
+		 *  Returns the exit point. */
+		function rayToEdge(
+			from: {x:number,y:number},
+			through: {x:number,y:number},
+			W: number, H: number
+		): {x:number,y:number} {
+			const dx = through.x - from.x;
+			const dy = through.y - from.y;
+			if (Math.abs(dx) < 1e-9 && Math.abs(dy) < 1e-9) return through;
+
+			// Find t values for all 4 canvas edges
+			const ts: number[] = [];
+			if (Math.abs(dx) > 1e-9) {
+				ts.push((0 - from.x) / dx);
+				ts.push((W - from.x) / dx);
+			}
+			if (Math.abs(dy) > 1e-9) {
+				ts.push((0 - from.y) / dy);
+				ts.push((H - from.y) / dy);
+			}
+
+			// We want the smallest positive t (forward along the ray)
+			const t = ts.filter(v => v > 1e-6).reduce((a, b) => Math.min(a, b), Infinity);
+			return { x: from.x + dx * t, y: from.y + dy * t };
+		}
+
+		const marks = this.videoState.marks;
+
+		for (let axis = 0; axis < 3; axis++) {
+			const edges = AXIS_EDGES[axis];
+			const colorBase = AXIS_COLORS[axis];
+
+			// Collect all marked edge pairs for this axis
+			const markedEdges: [Point2D, Point2D][] = [];
+			for (const [a, b] of edges) {
+				if (marks[a] && marks[b]) {
+					markedEdges.push([marks[a]!, marks[b]!]);
+				}
+			}
+			if (markedEdges.length < 2) {
+				// Need at least 2 edges to compute a vanishing point
+				// With only 1 edge, just draw that edge segment as a hint
+				if (markedEdges.length === 1) {
+					const [p1, p2] = markedEdges[0];
+					ctx.beginPath();
+					ctx.moveTo(p1.x * W, p1.y * H);
+					ctx.lineTo(p2.x * W, p2.y * H);
+					ctx.strokeStyle = `${colorBase}0.7)`;
+					ctx.lineWidth = 0.8 * S;
+					ctx.setLineDash([6 * S, 4 * S]);
+					ctx.stroke();
+				}
+				continue;
+			}
+
+			// Estimate vanishing point by averaging all pairwise intersections
+			// (more marked edges = more accurate vanishing point estimate)
+			const candidates: {x:number,y:number}[] = [];
+			for (let i = 0; i < markedEdges.length; i++) {
+				for (let j = i + 1; j < markedEdges.length; j++) {
+					const [a1, a2] = markedEdges[i];
+					const [b1, b2] = markedEdges[j];
+					const h_a1 = toHomogeneous(a1, W, H);
+					const h_a2 = toHomogeneous(a2, W, H);
+					const h_b1 = toHomogeneous(b1, W, H);
+					const h_b2 = toHomogeneous(b2, W, H);
+					const vp = intersect(lineThrough(h_a1, h_a2), lineThrough(h_b1, h_b2));
+					if (vp) candidates.push(vp);
+				}
+			}
+
+			if (candidates.length === 0) continue; // all edges parallel (orthographic)
+
+			// Average the candidates for a robust estimate
+			const vp = {
+				x: candidates.reduce((s, p) => s + p.x, 0) / candidates.length,
+				y: candidates.reduce((s, p) => s + p.y, 0) / candidates.length,
+			};
+
+			// Draw a ray from every marked corner through the vanishing point
+			// Only draw for corners that belong to this axis's edges
+			const cornerIndices = new Set(edges.flat());
+			for (const idx of cornerIndices) {
+				if (!marks[idx]) continue;
+				const from = { x: marks[idx]!.x * W, y: marks[idx]!.y * H };
+				const exit = rayToEdge(from, vp, W, H);
+
+				ctx.beginPath();
+				ctx.moveTo(from.x, from.y);
+				ctx.lineTo(exit.x, exit.y);
+				ctx.strokeStyle = `${colorBase}0.5)`;
+				ctx.lineWidth = 1 * S;
+				ctx.setLineDash([6 * S, 4 * S]);
+				ctx.stroke();
+			}
+
+			// Also draw the solid edge segments between marked pairs
+			for (const [p1, p2] of markedEdges) {
+				ctx.beginPath();
+				ctx.moveTo(p1.x * W, p1.y * H);
+				ctx.lineTo(p2.x * W, p2.y * H);
+				ctx.strokeStyle = `${colorBase}0.7)`;
+				ctx.lineWidth = 1 * S;
+				ctx.stroke();
+			}
 		}
 	}
 
