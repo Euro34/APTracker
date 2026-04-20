@@ -62,8 +62,6 @@
 
 .corner-status.done {
 	border-color: var(--success-color);
-	background-color: var(--success-color);
-	color: var(--background1-color);
 }
 
 /* Reference Object Marker */

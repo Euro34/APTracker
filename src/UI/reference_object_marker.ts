@@ -278,9 +278,9 @@ class VideoManager {
 		];
 
 		const AXIS_COLORS = [
-			'rgba(255,0,0,',   // X — red
-			'rgba(0,255,0,',   // Y — green
-			'rgba(0,120,255,',  // Z — blue
+			'rgba(255,0,0,',
+			'rgba(0,255,0,',
+			'rgba(0,120,255,',
 		];
 
 		type Vec3 = [number, number, number]; // homogeneous 2D point/line
@@ -301,16 +301,13 @@ class VideoManager {
 			return cross(p1, p2);
 		}
 
-		/** Intersection of two lines in homogeneous coords.
-		 *  Returns null if lines are parallel (w ≈ 0) — vanishing point at infinity. */
 		function intersect(l1: Vec3, l2: Vec3): Point2D | null {
 			const p = cross(l1, l2);
 			if (Math.abs(p[2]) < 1e-9) return null; // parallel
 			return { x: p[0] / p[2], y: p[1] / p[2] };
 		}
 
-		/** Extend a ray from `from` through `through` to the canvas boundary.
-		 *  Returns the exit point. */
+		// Full length ray
 		function rayToEdge(
 			from: {x:number,y:number},
 			through: {x:number,y:number},
@@ -349,8 +346,8 @@ class VideoManager {
 					markedEdges.push([marks[a]!, marks[b]!]);
 				}
 			}
+			// Need at least 2 edges to compute a vanishing point
 			if (markedEdges.length < 2) {
-				// Need at least 2 edges to compute a vanishing point
 				// With only 1 edge, just draw that edge segment as a hint
 				if (markedEdges.length === 1) {
 					const [p1, p2] = markedEdges[0];
@@ -413,6 +410,7 @@ class VideoManager {
 				ctx.lineTo(p2.x * W, p2.y * H);
 				ctx.strokeStyle = `${colorBase}0.7)`;
 				ctx.lineWidth = 1 * S;
+				ctx.setLineDash([]); // solid line
 				ctx.stroke();
 			}
 		}
