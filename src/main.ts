@@ -8,6 +8,8 @@ import { syncEditor } from "./UI/sync";
 import { refObjDim } from "./UI/reference_object_dimension";
 import { refObjMarker } from "./UI/reference_object_marker";
 
+const version = 1;
+
 interface ExportedVideo {
     name: string;
     type: string;
@@ -167,7 +169,7 @@ class APTracker {
         const hasVideoData = videos.every((v) => v.dataUrl !== undefined);
 
         const payload: APTrackerExport = {
-            version: 1,
+            version: version,
             exportedAt: new Date().toISOString(),
             hasVideoData,
             videos,
@@ -209,13 +211,13 @@ class APTracker {
                 const text = await file.text();
                 const data: APTrackerExport = JSON.parse(text);
 
-                if (data.version !== 1) {
+                if (data.version !== version) {
                     alert("Incompatible export file version.");
                     return;
                 }
 
                 // Restore video Files if base64 data is present
-                if (data.hasVideoData) {
+                if (data.hasVideoData && data.videos.length > 0) {
                     this.uploadedVideos = data.videos.map((v) =>this.dataUrlToFile(v.dataUrl!, v));
                     this.frameTimestamps = data.frameTimestamps;
 
@@ -226,27 +228,28 @@ class APTracker {
                 }
 
                 // Trim
-                if (data.trimStates !== undefined) {
+                if (!data.trimStates.every((v) => v === null)) {
                     this.trimStates = data.trimStates;
                     syncEditor.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates);
                     this.syncStatus();
                 }
 
                 // RefObjDim
-                if (data.referenceObject !== undefined) {
+                if (data.referenceObject !== null) {
                     this.referenceObject = data.referenceObject;
                     refObjDim.imported(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
                     this.updateReferenceObject(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
                 }
 
                 // RefObjMarker
-                if (data.referenceCorners !== undefined) {
+                if (!data.referenceCorners[0].every((corner) => corner === null) || !data.referenceCorners[1].every((corner) => corner === null)) {
                     this.referenceCorners = data.referenceCorners;
                     refObjMarker.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates, this.referenceCorners);
                     this.updateReferenceCornersStatus();
                 }
                 this.projectionMatrix = data.projectionMatrix;
 
+                console.log("Import successful");
             } catch (err) {
                 alert("Failed to import: file is corrupted or not a valid APTracker export.");
                 console.error(err);
