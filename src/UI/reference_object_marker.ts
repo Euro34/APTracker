@@ -801,9 +801,29 @@ class RefObjMarker {
 		});
 	}
 
-	// public imported(videos: File[], frameTimestamps: number[][], trimStates: (number|null)[], referenceCorners: (Point2D | null)[][]) {
-	// 	this.stateA
-	// }
+	public imported(videos: File[], frameTimestamps: number[][], trimStates: (number|null)[], referenceCorners: (Point2D | null)[][]) {
+		if (videos[0]) {
+			this.stateA.updateVideo(videos[0], frameTimestamps[0]);
+		}
+		if (videos[1]) {
+			this.stateB.updateVideo(videos[1], frameTimestamps[1]);
+		}
+		if (trimStates[0] !== null && trimStates[1] !== null) {
+			this.stateA.updateTrim(trimStates[0]!, trimStates[1]!);
+		}
+		if (trimStates[2] !== null && trimStates[3] !== null) {
+			this.stateB.updateTrim(trimStates[2]!, trimStates[3]!);
+		}
+		if (referenceCorners[0]) {
+			this.stateA.marks = referenceCorners[0];
+		}
+		if (referenceCorners[1]) {
+			this.stateB.marks = referenceCorners[1];
+		}
+		this.syncButtonStates();
+		this.selectVideo('a');
+		this.updateCard();
+	}
 }
 
 export let refObjMarker = new RefObjMarker();

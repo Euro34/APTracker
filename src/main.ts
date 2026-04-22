@@ -131,9 +131,12 @@ class APTracker {
 
     public updateReferenceCorners(referenceCorners: (Point2D | null)[][]) {
         this.referenceCorners = referenceCorners;
+        this.updateReferenceCornersStatus();
+    }
 
+    private updateReferenceCornersStatus() {
         let markedCount = [0, 0];
-        referenceCorners.forEach((video, index) => {
+        this.referenceCorners.forEach((video, index) => {
             video.forEach((corner) => {
                 if (corner !== null) markedCount[index]++;
             });
@@ -222,14 +225,27 @@ class APTracker {
                     alert("Session restored (no video data in file).\nPlease re-upload the original video files before importing this file.");
                 }
 
+                // Trim
                 if (data.trimStates !== undefined) {
                     this.trimStates = data.trimStates;
+                    syncEditor.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates);
+                    this.syncStatus();
                 }
-                this.referenceObject = data.referenceObject;
-                this.referenceCorners = data.referenceCorners;
-                this.projectionMatrix = data.projectionMatrix;
 
-                this.reRenderUI();
+                // RefObjDim
+                if (data.referenceObject !== undefined) {
+                    this.referenceObject = data.referenceObject;
+                    refObjDim.imported(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
+                    this.updateReferenceObject(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
+                }
+
+                // RefObjMarker
+                if (data.referenceCorners !== undefined) {
+                    this.referenceCorners = data.referenceCorners;
+                    refObjMarker.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates, this.referenceCorners);
+                    this.updateReferenceCornersStatus();
+                }
+                this.projectionMatrix = data.projectionMatrix;
 
             } catch (err) {
                 alert("Failed to import: file is corrupted or not a valid APTracker export.");
@@ -266,18 +282,6 @@ class APTracker {
             type: mime,
             lastModified: meta.lastModified,
         });
-    }
-
-    private reRenderUI() {
-
-        syncEditor.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates);
-        this.syncStatus();
-
-        refObjDim.imported(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
-        this.updateReferenceObject(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
-
-        // refObjMarker.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates, this.referenceCorners);
-        this.updateReferenceCorners(this.referenceCorners);
     }
 }
 
