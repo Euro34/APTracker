@@ -5,22 +5,24 @@ export class ReferenceObject {
     public width: number;
     public length: number;
     public height: number;
-    public corners_list: Point3D[];
+
+    get corners_list(): Point3D[] {
+        return [
+            new Point3D(0, 0, 0),
+            new Point3D(this.width, 0, 0),
+            new Point3D(0, this.length, 0),
+            new Point3D(this.width, this.length, 0),
+            new Point3D(0, 0, this.height),
+            new Point3D(this.width, 0, this.height),
+            new Point3D(0, this.length, this.height),
+            new Point3D(this.width, this.length, this.height)
+        ];
+    }
 
     constructor(width: number, length: number, height: number) {
         this.width = width;
         this.length = length;
         this.height = height;
-        this.corners_list = [
-            new Point3D(0, 0, 0),
-            new Point3D(width, 0, 0),
-            new Point3D(0, length, 0),
-            new Point3D(width, length, 0),
-            new Point3D(0, 0, height),
-            new Point3D(width, 0, height),
-            new Point3D(0, length, height),
-            new Point3D(width, length, height)
-        ];
     }
 
     private matchCornersToImagePoints(image_2D_points: Array<Point2D | null>): [Point2D[], Point3D[]] {
