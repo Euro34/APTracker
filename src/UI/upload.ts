@@ -75,8 +75,8 @@ export class Upload {
 			startFrame: stateB.startFrame,
 			endFrame: stateB.endFrame,
 			currentTime: stateB.currentTime,
-			refObjMarks: stateB.refObjMarks,
-            targetObjMarks: stateB.targObjMarks,
+			refObjMarks: stateB.referenceMarks,
+            targetObjMarks: stateB.targetMarks,
 		} : null;
 
 		if (!aStillPresent) stateA.reset();
@@ -109,7 +109,7 @@ export class Upload {
 		}
 
 		this.render();
-        this.states[0].onChange?.();
+        this.states[0].onUpload?.();
         this.extractAndUpdate();
 	}
 
@@ -141,7 +141,7 @@ export class Upload {
                 console.error("Error extracting frame timestamps:", error);
             }
         } finally {
-            this.states[0].onChange?.();
+            this.states[0].onUpload?.();
             this.export_btn.disabled = false;
             this.export_btn.title = "Export";
         }

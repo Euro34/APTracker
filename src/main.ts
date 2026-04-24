@@ -6,7 +6,7 @@ import { updateStatus } from "./UI/workflow";
 import { Upload } from "./UI/upload";
 import { syncEditor } from "./UI/sync";
 import { refObjDim } from "./UI/reference_object_dimension";
-import { RefObjMarker } from "./UI/reference_object_marker";
+import { ReferenceMarker } from "./UI/reference_marker";
 
 // const version = 1;
 
@@ -38,7 +38,7 @@ class APTracker {
     // Old
     public uploadedVideos: File[] = [];
     public frameTimestamps: number[][] = [];
-    public refObjMarker: RefObjMarker;
+    public refObjMarker: ReferenceMarker;
 
     public trimStates: (number | null)[] = []; // [start1, end1, start2, end2] (in frame number)
     public referenceCorners: (Point2D | null)[][] = [];
@@ -49,15 +49,15 @@ class APTracker {
         // document.getElementById("export")!.addEventListener("click", () => this.exportData());
         // document.getElementById("export")!.addEventListener("click", () => this.importData());
 
-        this.refObjMarker = new RefObjMarker(this.states);
+        this.refObjMarker = new ReferenceMarker(this.states);
         this.states.forEach((state) => {
-            state.onChange = () => {
-                this.updateStatus();
-            };
+            state.onUpload = () => this.updateUploadStatus();
+            state.onTrimChange = () => this.updateSyncStatus();
+            state.referenceMarksChange = () => this.updateRefMarkerStatus();
         });
     }
 
-    private updateStatus() {
+    private updateUploadStatus() {
         console.log("Vid A\n" + this.states[0].toString());
         console.log("Vid B\n" + this.states[1].toString());
         // Upload
@@ -68,10 +68,9 @@ class APTracker {
         } else {
             updateStatus("Upload", "");
         }
+    }
 
-        // Sync
-        // Reference Object Dimension
-        // Reference Object Marker
+    private updateSyncStatus() {
     }
 
     public updateReferenceObject(width: number | null, length: number | null, height: number | null) {
@@ -93,6 +92,10 @@ class APTracker {
         }
 
         this.refObjMarker.updateBoxDimensions(width, length, height);
+    }
+
+    private updateRefMarkerStatus() {
+
     }
 
     // private async exportData(): Promise<void> {

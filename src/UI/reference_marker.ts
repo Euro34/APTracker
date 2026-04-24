@@ -55,7 +55,7 @@ class VideoManager {
 
 		this.panZoom.onLeftClick = (pos) => {
 			if (!this.videoState.hasVideo) return;
-			this.videoState.refObjMarks[this.selectedCorner] = pos;
+			this.videoState.referenceMarks[this.selectedCorner] = pos;
 			this.drawMarks();
 		};
 		this.panZoom.onMiddleClick = (pos) => {
@@ -188,7 +188,7 @@ class VideoManager {
 		ctx.clearRect(0, 0, W, H);
 
 		for (let i = 0; i < 8; i++) {
-			const mark = this.videoState.refObjMarks[i];
+			const mark = this.videoState.referenceMarks[i];
 			if (!mark) continue;
 
 			const cx = mark.x * W;
@@ -280,7 +280,7 @@ class VideoManager {
 			return { x: from.x + dx * t, y: from.y + dy * t };
 		}
 
-		const marks = this.videoState.refObjMarks;
+		const marks = this.videoState.referenceMarks;
 
 		for (let axis = 0; axis < 3; axis++) {
 			const edges = AXIS_EDGES[axis];
@@ -371,10 +371,10 @@ class VideoManager {
 		
 		ctx.clearRect(0, 0, W, H);
 		if (!pos) return;
-		if (this.videoState.refObjMarks[this.selectedCorner] !== null) return;
+		if (this.videoState.referenceMarks[this.selectedCorner] !== null) return;
 
 		// x-axis
-		const pointx = this.videoState.refObjMarks[this.selectedCorner ^ 1];
+		const pointx = this.videoState.referenceMarks[this.selectedCorner ^ 1];
 		if (pointx) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -385,7 +385,7 @@ class VideoManager {
 		}
 
 		// y-axis
-		const pointy = this.videoState.refObjMarks[this.selectedCorner ^ 2];
+		const pointy = this.videoState.referenceMarks[this.selectedCorner ^ 2];
 		if (pointy) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -396,7 +396,7 @@ class VideoManager {
 		}
 
 		// z-axis
-		const pointz = this.videoState.refObjMarks[this.selectedCorner ^ 4];
+		const pointz = this.videoState.referenceMarks[this.selectedCorner ^ 4];
 		if (pointz) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -410,7 +410,7 @@ class VideoManager {
 	private deleteMarkAtPos(pos: Point2D): void {
 		const S = this.panZoom.OVERLAY_SCALE;
 
-		this.videoState.refObjMarks.forEach((mark, index) => {
+		this.videoState.referenceMarks.forEach((mark, index) => {
 			if (!mark) return;
 
 			const dotRadiusPx = this.dotRadius * 1.5 * S;
@@ -427,7 +427,7 @@ class VideoManager {
 	}
 
 	private deleteMark(index: number) {
-		this.videoState.refObjMarks[index] = null;
+		this.videoState.referenceMarks[index] = null;
 		this.drawMarks();
 	}
 }
@@ -583,7 +583,7 @@ class Ref3DWidget {
 	}
 }
 
-export class RefObjMarker {
+export class ReferenceMarker {
 	private cardA = document.getElementById("ref-corner-A") as HTMLDivElement;
 	private cardB = document.getElementById("ref-corner-B") as HTMLDivElement;
 	private markedCountA = this.cardA.querySelector(".marked-count") as HTMLParagraphElement;
@@ -605,7 +605,7 @@ export class RefObjMarker {
 
     constructor(states:  VideoState[]) {
 		[this.stateA, this.stateB] = states;
-		states.forEach(s => s.onChange = () => {
+		states.forEach(s => s.onUpload = () => {
 			this.syncButtonStates();
 			this.selectVideo('a');
 		});
@@ -680,14 +680,13 @@ export class RefObjMarker {
 	}
 
 	public updateMain() {
-		this.stateA.onChange?.();
-		this.stateB.onChange?.();
+		// this.stateA.onChange?.();
 		this.updateCard();
 	}
 
 	private updateCard() {
-		const countA = this.stateA.refObjMarks.filter(m => m !== null).length;
-		const countB = this.stateB.refObjMarks.filter(m => m !== null).length;
+		const countA = this.stateA.referenceMarks.filter(m => m !== null).length;
+		const countB = this.stateB.referenceMarks.filter(m => m !== null).length;
 		this.markedCountA.textContent = `${countA} corner${countA !== 1 ? 's' : ''} marked`;
 		this.markedCountB.textContent = `${countB} corner${countB !== 1 ? 's' : ''} marked`;
 
@@ -706,14 +705,14 @@ export class RefObjMarker {
 		}
 
 		this.cornerStatusesA.forEach((el, idx) => {
-			if (this.stateA.refObjMarks[idx]) {
+			if (this.stateA.referenceMarks[idx]) {
 				el.classList.add("done");
 			} else {
 				el.classList.remove("done");
 			}
 		});
 		this.cornerStatusesB.forEach((el, idx) => {
-			if (this.stateB.refObjMarks[idx]) {
+			if (this.stateB.referenceMarks[idx]) {
 				el.classList.add("done");
 			} else {
 				el.classList.remove("done");

@@ -3,13 +3,16 @@ import { Point2D } from "./Types";
 export class VideoState {
     public file: File = new File([], '');
     public frameTimestamps: number[] = [];
-    public refObjMarks: (Point2D | null)[] = Array(8).fill(null);
-    public targObjMarks: (Point2D | null)[] = [];
+    public referenceMarks: (Point2D | null)[] = Array(8).fill(null);
+    public targetMarks: (Point2D | null)[] = [];
     public startFrame = 0;
     public endFrame = 0;
     private refCurrentTime = 0;
 
-    public onChange: (() => void) | null = null;
+    public onUpload: (() => void) | null = null;
+    public onTrimChange: (() => void) | null = null;
+    public referenceMarksChange: (() => void) | null = null;
+    public targetMarksChange: (() => void) | null = null;
 
     get hasVideo(): boolean { return this.file.size > 0; }
     get startTime(): number { return this.frameTimestamps[this.startFrame] ?? 0; }
@@ -23,8 +26,8 @@ export class VideoState {
         this.file = file;
         this.frameTimestamps = timestamps ?? [];
         this.currentTime = currentTime ?? this.startTime;
-        this.refObjMarks = refObjMarks;
-        this.targObjMarks = targetObjMarks;
+        this.referenceMarks = refObjMarks;
+        this.targetMarks = targetObjMarks;
     }
 
     public updateTimestamps(timestamps: number[]) {
@@ -43,13 +46,13 @@ export class VideoState {
     public reset() {
         this.file = new File([], '');
         this.frameTimestamps = [];
-        this.refObjMarks = Array(8).fill(null);
-        this.targObjMarks = Array(8).fill(null);
+        this.referenceMarks = Array(8).fill(null);
+        this.targetMarks = Array(8).fill(null);
         this.startFrame = 0;
         this.endFrame = 0;
     }
 
     public toString(): string {
-        return `VideoState: file = ${this.file.name}\nframes=${this.frameTimestamps.length}\nstartFrame=${this.startFrame}\nendFrame=${this.endFrame}\ncurrentTime=${this.currentTime}\nrefObjMarks=${this.refObjMarks.map(m => m ? m.toString() : 'null').join(', ')}\ntargObjMarks=${this.targObjMarks.map(m => m ? m.toString() : 'null').join(', ')}`;
+        return `VideoState: file = ${this.file.name}\nframes=${this.frameTimestamps.length}\nstartFrame=${this.startFrame}\nendFrame=${this.endFrame}\ncurrentTime=${this.currentTime}\nrefObjMarks=${this.referenceMarks.map(m => m ? m.toString() : 'null').join(', ')}\ntargObjMarks=${this.targetMarks.map(m => m ? m.toString() : 'null').join(', ')}`;
     }
 }
