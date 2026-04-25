@@ -5,9 +5,8 @@ export class Upload {
 	private uploadArea = document.getElementById("upload-area") as HTMLDivElement;
 	private previewGrid = document.getElementById("preview-grid") as HTMLDivElement;
 	private fileInput = document.getElementById("video-upload") as HTMLInputElement;
-	private export_btn = document.getElementById("export") as HTMLButtonElement;
 
-	private fileCache = new Map<string, { file: File; timestamps: number[] }>();
+	private fileCache = new Map<string, { file: File; }>();
 
 	private states: [VideoState, VideoState];
 
@@ -42,8 +41,9 @@ export class Upload {
 		const toAdd = videoFiles.slice(0, slots);
 
 		for (const file of toAdd) {
+			// Prevent duplicate file
 			if (!this.fileCache.has(file.name)) {
-				this.fileCache.set(file.name, { file, timestamps: [] });
+				this.fileCache.set(file.name, { file });
 			}
 		}
 
@@ -69,30 +69,14 @@ export class Upload {
 		const bStillPresent = stateB.file.name !== "" && this.fileCache.has(stateB.file.name);
 
 		// Snapshot B's full state before any reset
-		const bSnapshot = bStillPresent ? {
-			file: stateB.file,
-			frameTimestamps: stateB.frameTimestamps,
-			startFrame: stateB.startFrame,
-			endFrame: stateB.endFrame,
-			currentTime: stateB.currentTime,
-			refObjMarks: stateB.referenceMarks,
-            targetObjMarks: stateB.targetMarks,
-		} : null;
+		const bSnapshot = bStillPresent ? stateB.snapshot() : null;
 
 		if (!aStillPresent) stateA.reset();
 		if (!bStillPresent) stateB.reset();
 
 		// Shift B -> A if A is empty but B has video
 		if (!stateA.hasVideo && stateB.hasVideo && bSnapshot) {
-			stateA.updateVideo(
-				bSnapshot.file,
-				bSnapshot.frameTimestamps,
-				bSnapshot.currentTime,
-				bSnapshot.refObjMarks,
-                bSnapshot.targetObjMarks
-			);
-			stateA.startFrame = bSnapshot.startFrame;
-			stateA.endFrame = bSnapshot.endFrame;
+			stateA.assignFromSnapshot(bSnapshot);
 			stateB.reset();
 		}
 
@@ -102,49 +86,36 @@ export class Upload {
 		);
 		for (const data of newFiles) {
 			if (!stateA.hasVideo) {
-				stateA.updateVideo(data.file, data.timestamps);
+				stateA.updateVideo(data.file);
 			} else if (!stateB.hasVideo) {
-				stateB.updateVideo(data.file, data.timestamps);
+				stateB.updateVideo(data.file);
 			}
 		}
-
+		
 		this.render();
-        this.states[0].onUpload?.();
         this.extractAndUpdate();
 	}
 
 	private async extractAndUpdate(): Promise<void> {
-        if (this.frameExtractionController) {
-            this.frameExtractionController.abort();
-        }
-        this.frameExtractionController = new AbortController();
-        const { signal } = this.frameExtractionController;
-        this.export_btn.disabled = true;
-        this.export_btn.title = "Extracting frame timestamps...";
-
         const videos = this.states.filter((s) => s.hasVideo).map((s) => s.file);
 
-        try {
-            const frameTimestamps = await extractAllFrameTimestamps(videos, signal);
-            videos.forEach((file, i) => {
-                // Update cache for same file check
-                const cached = this.fileCache.get(file.name);
-                if (cached) cached.timestamps = frameTimestamps[i] ?? [];
+        if (this.frameExtractionController) { this.frameExtractionController.abort( videos ); }
 
-                const state = this.states.find((s) => s.file.name === file.name);
-                if (state) {
-                    state.updateTimestamps(frameTimestamps[i] ?? []);
-                }
-            });
-        } catch (error: any) {
-            if (error.name !== "AbortError") {
+        this.frameExtractionController = new AbortController();
+        const { signal } = this.frameExtractionController;
+
+		try {
+			const frameTimestamps = await extractAllFrameTimestamps(videos, signal);
+			frameTimestamps.forEach((ts, idx) => {
+				this.states[idx].updateTimestamps(ts);
+			});
+		} catch (error: any) {
+			if (error.name === 'AbortError') {
+                console.log("Previous extraction cancelled.");
+            } else {
                 console.error("Error extracting frame timestamps:", error);
             }
-        } finally {
-            this.states[0].onUpload?.();
-            this.export_btn.disabled = false;
-            this.export_btn.title = "Export";
-        }
+		}
     }
 
 	private render(): void {
@@ -189,11 +160,5 @@ export class Upload {
 			card.append(video, filename, removeBtn);
 			this.previewGrid.appendChild(card);
 		});
-	}
-
-	public imported(files: File[]) {
-		this.fileCache.clear();
-		files.forEach((f) => this.fileCache.set(f.name, { file: f, timestamps: [] }));
-		this.assignSlotsAndExtract();
 	}
 }

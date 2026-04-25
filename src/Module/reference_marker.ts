@@ -93,7 +93,7 @@ class VideoManager {
 		this.video.load();
 		
 		this.video.addEventListener('loadeddata', () => {
-			this.video.currentTime = this.videoState.currentTime
+			this.video.currentTime = this.videoState.refCurrentTime
 			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
@@ -123,7 +123,7 @@ class VideoManager {
 	private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
 
 	private updatePlayhead(): void {
-		this.videoState.currentTime = this.video.currentTime;
+		this.videoState.refCurrentTime = this.video.currentTime;
 		const currentTime = this.video.currentTime - this.videoState.startTime;
 		const duration = this.videoState.duration;
 		if (duration > 0) {

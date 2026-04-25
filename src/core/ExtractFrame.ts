@@ -4,6 +4,7 @@ import { fetchFile } from "@ffmpeg/util";
 const progressBar = document.getElementById("loading-fill") as HTMLElement;
 const loadingText = document.getElementById("loading-text") as HTMLElement;
 const loadingScreen = document.getElementById("loading-screen") as HTMLElement;
+const export_btn = document.getElementById("export") as HTMLButtonElement;
 
 // UI Management
 let hideTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -206,6 +207,9 @@ async function extractFrameTimestamps(file: File, signal?: AbortSignal, onProgre
 }
 
 export async function extractAllFrameTimestamps(files: File[], signal?: AbortSignal): Promise<number[][]> {
+    export_btn.disabled = true;
+    export_btn.title = "Extracting frame timestamps...";
+
     if (files.length === 0) return [];
 
     showLoadingScreen();
@@ -236,5 +240,9 @@ export async function extractAllFrameTimestamps(files: File[], signal?: AbortSig
         }
         abortLoadingScreen(); // Hide on fatal error
         throw error;
+    } finally {
+        export_btn.disabled = false;
+        export_btn.title = "Export";
     }
+
 }

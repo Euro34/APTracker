@@ -1,12 +1,12 @@
 import { VideoState } from "./core/VideoState";
-import { Point2D } from "./core/Types";
 import { ReferenceObject } from "./core/ReferenceObject";
 
-import { updateStatus } from "./UI/workflow";
-import { Upload } from "./UI/upload";
-import { syncEditor } from "./UI/sync";
-import { refObjDim } from "./UI/reference_object_dimension";
-import { ReferenceMarker } from "./UI/reference_marker";
+import { updateStatus } from "./Module/workflow";
+import { Upload } from "./Module/upload";
+import { SyncEditor } from "./Module/sync";
+// refObjDim
+import {  } from "./Module/reference_object_dimension";
+import { ReferenceMarker } from "./Module/reference_marker";
 
 // const version = 1;
 
@@ -33,34 +33,39 @@ class APTracker {
     // New
     public states: [VideoState, VideoState] = [new VideoState(), new VideoState()];
     public upload = new Upload(this.states);
+    public syncEditor = new SyncEditor(this.states);
     public referenceObject: ReferenceObject | null = null;
-
-    // Old
-    public uploadedVideos: File[] = [];
-    public frameTimestamps: number[][] = [];
-    public refObjMarker: ReferenceMarker;
-
-    public trimStates: (number | null)[] = []; // [start1, end1, start2, end2] (in frame number)
-    public referenceCorners: (Point2D | null)[][] = [];
-
-    public projectionMatrix: number[][] = [];
+    public refObjMarker: ReferenceMarker = new ReferenceMarker(this.states);
 
     constructor() {
         // document.getElementById("export")!.addEventListener("click", () => this.exportData());
         // document.getElementById("export")!.addEventListener("click", () => this.importData());
 
-        this.refObjMarker = new ReferenceMarker(this.states);
+        // DEBUG PURPOSE
+        document.getElementById("setting")!.addEventListener("click", () => this.output());
+
         this.states.forEach((state) => {
-            state.onUpload = () => this.updateUploadStatus();
-            state.onTrimChange = () => this.updateSyncStatus();
-            state.referenceMarksChange = () => this.updateRefMarkerStatus();
+            state.addEventListener("onUpload", () => this.updateUploadStatus());
+            state.addEventListener("timestampsChange", () => this.updateSyncStatus());
+            state.addEventListener("trimChange", () => this.updateSyncStatus());
+            // state.addEventListener("onUpload", () => this.updateRefMarkerStatus());
+            state.addEventListener("onReset", () => this.updateAllStatus());
         });
     }
 
+    private updateAllStatus() {
+        this.updateUploadStatus();
+        this.updateSyncStatus();
+        this.updateRefMarkerStatus();
+    }
+
+    private output() {
+        this.states.forEach((state, idx) => {
+            console.log((idx+1) + "\n" + state.toString());
+        })
+    }
+
     private updateUploadStatus() {
-        console.log("Vid A\n" + this.states[0].toString());
-        console.log("Vid B\n" + this.states[1].toString());
-        // Upload
         if (this.states[0].hasVideo && this.states[1].hasVideo) {
             updateStatus("Upload", "done");
         } else if (this.states[0].hasVideo || this.states[1].hasVideo) {
@@ -71,6 +76,15 @@ class APTracker {
     }
 
     private updateSyncStatus() {
+        if (this.states[0].hasTimestamps && this.states[1].hasTimestamps) {
+            if (Math.abs(this.states[0].duration - this.states[1].duration) <= 0.05) {
+                updateStatus("Sync", "done");
+            } else {
+                updateStatus("Sync", "inprogress");
+            }
+        } else {
+            updateStatus("Sync", "");
+        }
     }
 
     public updateReferenceObject(width: number | null, length: number | null, height: number | null) {
