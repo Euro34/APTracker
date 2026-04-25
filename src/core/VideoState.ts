@@ -18,12 +18,8 @@ export class VideoState extends EventTarget {
 
     set refCurrentTime(time: number) { this._refCurrentTime = Math.min(Math.max(time, this.startTime), this.endTime); }
 
-    public updateVideo(file: File, timestamps: number[] | null = null, currentTime : number | null = null, referenceMarks: (Point2D | null)[] | null = null, targetMarks: (Point2D | null)[] | null = null) {
+    public updateVideo(file: File) {
         this.file = file;
-        this.frameTimestamps = timestamps ?? [];
-        this.refCurrentTime = currentTime ?? this.startTime;
-        if (referenceMarks) this.referenceMarks = referenceMarks;
-        if (targetMarks) this.targetMarks = targetMarks
         this.dispatchEvent(new Event("onUpload"));
         // console.log("Upload\n" + this.toString());
     }
@@ -45,6 +41,11 @@ export class VideoState extends EventTarget {
         this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
         this.dispatchEvent(new Event("trimChange"));
         // console.log("Trim\n" + this.toString());
+    }
+
+    public updateReferenceMarks(index: number, point: Point2D | null) {
+        this.referenceMarks[index] = point;
+        this.dispatchEvent(new Event("referenceChange"));
     }
 
     public reset() {

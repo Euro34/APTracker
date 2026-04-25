@@ -48,7 +48,7 @@ class APTracker {
             state.addEventListener("onUpload", () => this.updateUploadStatus());
             state.addEventListener("timestampsChange", () => this.updateSyncStatus());
             state.addEventListener("trimChange", () => this.updateSyncStatus());
-            // state.addEventListener("onUpload", () => this.updateRefMarkerStatus());
+            state.addEventListener("referenceChange", () => this.updateRefMarkerStatus());
             state.addEventListener("onReset", () => this.updateAllStatus());
         });
     }

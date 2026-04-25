@@ -38,13 +38,14 @@ class VideoManager {
 	private wasPlayingBeforeScrub = false;
 
 	private selectedCorner = 0;
-	private videoState: VideoState;
+	private state: VideoState;
 
 	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay, this.boxOverlay]);
 	private readonly dotRadius = 3.5;
 
 	constructor(state: VideoState) {
-		this.videoState = state;
+		this.state = state;
+		this.state.addEventListener('trimChange', () => this.video.currentTime = this.state.refCurrentTime);
 
 		this.playBtn.addEventListener('click', () => this.togglePlay());
 		this.deleteBtn.addEventListener('click', () => this.deleteMark(this.selectedCorner));
@@ -54,20 +55,20 @@ class VideoManager {
 		this.bindScrubEvents();
 
 		this.panZoom.onLeftClick = (pos) => {
-			if (!this.videoState.hasVideo) return;
-			this.videoState.referenceMarks[this.selectedCorner] = pos;
+			if (!this.state.hasVideo) return;
+			this.state.updateReferenceMarks(this.selectedCorner, pos);
 			this.drawMarks();
 		};
 		this.panZoom.onMiddleClick = (pos) => {
-			if (!this.videoState.hasVideo) return;
+			if (!this.state.hasVideo) return;
 			this.deleteMarkAtPos(pos);
 		};
 		this.panZoom.onRedraw = () => {
-			if (!this.videoState.hasVideo) return;
+			if (!this.state.hasVideo) return;
 			this.drawMarks();
 		};
 		this.panZoom.onMouseMove = (pos) => {
-			if (!this.videoState.hasVideo) return;
+			if (!this.state.hasVideo) return;
 			this.drawGuideLines(pos);
 		}
 	}
@@ -79,7 +80,7 @@ class VideoManager {
 	}
 	
 	public updateVideoState(videoState: VideoState): void {
-		this.videoState = videoState;
+		this.state = videoState;
 		const url = URL.createObjectURL(videoState.file);
 
 		if (videoState.hasVideo) {
@@ -93,7 +94,7 @@ class VideoManager {
 		this.video.load();
 		
 		this.video.addEventListener('loadeddata', () => {
-			this.video.currentTime = this.videoState.refCurrentTime
+			this.video.currentTime = this.state.refCurrentTime
 			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
@@ -102,7 +103,7 @@ class VideoManager {
 	}
 
 	private togglePlay(): void {
-		if (!this.videoState.hasVideo) return;
+		if (!this.state.hasVideo) return;
 		if (this.video.paused) {
 			this.play();
 		} else {
@@ -123,23 +124,23 @@ class VideoManager {
 	private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
 
 	private updatePlayhead(): void {
-		this.videoState.refCurrentTime = this.video.currentTime;
-		const currentTime = this.video.currentTime - this.videoState.startTime;
-		const duration = this.videoState.duration;
+		this.state.refCurrentTime = this.video.currentTime;
+		const currentTime = this.video.currentTime - this.state.startTime;
+		const duration = this.state.duration;
 		if (duration > 0) {
 			const progress = currentTime / duration;
 			this.playhead.style.left = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
-			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.videoState.duration)}`;
+			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.state.duration)}`;
 		} else {
 			this.playhead.style.left = '0%';
 			this.timeDisplay.textContent = `0.00 / 0.00`;
 		}
 		if (currentTime >= duration) {
 			this.pause();
-			this.video.currentTime = this.videoState.startTime;
+			this.video.currentTime = this.state.startTime;
 		}
 		if (currentTime < 0) {
-			this.video.currentTime = this.videoState.startTime;
+			this.video.currentTime = this.state.startTime;
 		}
 	}
 
@@ -150,7 +151,7 @@ class VideoManager {
 
 	private bindScrubEvents(): void {
 		this.playBar.addEventListener("mousedown", (e) => {
-			if (!this.videoState.hasVideo) return;
+			if (!this.state.hasVideo) return;
 			this.isScrubbing = true;
 			this.wasPlayingBeforeScrub = !this.video.paused;
 			this.pause();
@@ -174,7 +175,7 @@ class VideoManager {
 	private scrubToEvent(e: MouseEvent): void {
 		const rect = this.playBar.getBoundingClientRect();
 		const progress = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
-		const newTime = this.videoState.startTime + progress * this.videoState.duration;
+		const newTime = this.state.startTime + progress * this.state.duration;
 		this.video.currentTime = newTime;
 		// Update playhead immediately
 		this.playhead.style.left = `${progress * 100}%`;
@@ -188,7 +189,7 @@ class VideoManager {
 		ctx.clearRect(0, 0, W, H);
 
 		for (let i = 0; i < 8; i++) {
-			const mark = this.videoState.referenceMarks[i];
+			const mark = this.state.referenceMarks[i];
 			if (!mark) continue;
 
 			const cx = mark.x * W;
@@ -280,7 +281,7 @@ class VideoManager {
 			return { x: from.x + dx * t, y: from.y + dy * t };
 		}
 
-		const marks = this.videoState.referenceMarks;
+		const marks = this.state.referenceMarks;
 
 		for (let axis = 0; axis < 3; axis++) {
 			const edges = AXIS_EDGES[axis];
@@ -371,10 +372,10 @@ class VideoManager {
 		
 		ctx.clearRect(0, 0, W, H);
 		if (!pos) return;
-		if (this.videoState.referenceMarks[this.selectedCorner] !== null) return;
+		if (this.state.referenceMarks[this.selectedCorner] !== null) return;
 
 		// x-axis
-		const pointx = this.videoState.referenceMarks[this.selectedCorner ^ 1];
+		const pointx = this.state.referenceMarks[this.selectedCorner ^ 1];
 		if (pointx) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -385,7 +386,7 @@ class VideoManager {
 		}
 
 		// y-axis
-		const pointy = this.videoState.referenceMarks[this.selectedCorner ^ 2];
+		const pointy = this.state.referenceMarks[this.selectedCorner ^ 2];
 		if (pointy) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -396,7 +397,7 @@ class VideoManager {
 		}
 
 		// z-axis
-		const pointz = this.videoState.referenceMarks[this.selectedCorner ^ 4];
+		const pointz = this.state.referenceMarks[this.selectedCorner ^ 4];
 		if (pointz) {
 			ctx.beginPath();
 			ctx.moveTo(pos.x * W, pos.y * H);
@@ -410,7 +411,7 @@ class VideoManager {
 	private deleteMarkAtPos(pos: Point2D): void {
 		const S = this.panZoom.OVERLAY_SCALE;
 
-		this.videoState.referenceMarks.forEach((mark, index) => {
+		this.state.referenceMarks.forEach((mark, index) => {
 			if (!mark) return;
 
 			const dotRadiusPx = this.dotRadius * 1.5 * S;
@@ -427,7 +428,7 @@ class VideoManager {
 	}
 
 	private deleteMark(index: number) {
-		this.videoState.referenceMarks[index] = null;
+		this.state.updateReferenceMarks(index, null);
 		this.drawMarks();
 	}
 }
@@ -594,7 +595,6 @@ export class ReferenceMarker {
 
 	private stateA: VideoState;
 	private stateB: VideoState;
-	private activeState: 'a' | 'b' = 'a';
 
 	private refMarkerVideo: VideoManager;
 
@@ -605,9 +605,8 @@ export class ReferenceMarker {
 
     constructor(states:  VideoState[]) {
 		[this.stateA, this.stateB] = states;
-		states.forEach(s => s.onUpload = () => {
-			this.syncButtonStates();
-			this.selectVideo('a');
+		states.forEach(state => {
+			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
 		});
 		this.refMarkerVideo = new VideoManager(this.stateA);
 
@@ -643,18 +642,6 @@ export class ReferenceMarker {
 		this.vidBBtn.classList.toggle('disabled', !this.stateB.hasVideo);
 	}
 
-	public updateTrim(trimStates: (number|null)[]) {
-		const [start1, end1, start2, end2] = trimStates;
-		if (start1 !== null && end1 !== null) {
-			this.stateA.updateTrim(start1, end1);
-		}
-		if (start2 !== null && end2 !== null) {
-			this.stateB.updateTrim(start2, end2);
-		}
-		
-		this.selectVideo(this.activeState);
-	}
-
 	public updateBoxDimensions(width: number | null, length: number | null, height: number | null) {
         this.widget!.setDimensions(width ?? 0, length ?? 0, height ?? 0);
     }
@@ -680,7 +667,6 @@ export class ReferenceMarker {
 	}
 
 	public updateMain() {
-		// this.stateA.onChange?.();
 		this.updateCard();
 	}
 
