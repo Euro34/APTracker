@@ -1,14 +1,18 @@
+import { Matrix } from 'ml-matrix';
 import { Point2D } from "./Types";
 
 export class VideoState extends EventTarget {
     private _file: File = new File([], '');
     private _frameTimestamps: number[] = [];
-    private _referenceMarks: (Point2D | null)[] = Array(8).fill(null);
-    private _targetMarks: (Point2D | null)[] = [];
 
     private _startFrame = NaN;
     private _endFrame = NaN;
     private _refCurrentTime = NaN;
+
+    private _referenceMarks: (Point2D | null)[] = Array(8).fill(null);
+    private _targetMarks: (Point2D | null)[] = [];
+
+    public projectionMatrix: Matrix | null = null
 
     get file(): File { return this._file; }
     get frameTimestamps(): number[] { return this._frameTimestamps; }
@@ -37,11 +41,13 @@ export class VideoState extends EventTarget {
 
     public updateTimestamps(timestamps: number[]) {
         if (!this.hasTimestamps) {
+            this._frameTimestamps = timestamps;
             this.startFrame = 0;
             this.endFrame = timestamps.length > 0 ? timestamps.length - 1 : 0;
+            this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
+        } else {
+            this._frameTimestamps = timestamps;
         }
-        this._frameTimestamps = timestamps;
-        this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
         this.dispatchEvent(new Event("timestampsChange"));
         // console.log("Timestamps\n" + this.toString());
     }
@@ -57,6 +63,11 @@ export class VideoState extends EventTarget {
     public updateReferenceMarks(index: number, point: Point2D | null) {
         this._referenceMarks[index] = point;
         this.dispatchEvent(new Event("referenceChange"));
+    }
+
+    public updateTargetMarks(index: number, point: Point2D | null) {
+        this._targetMarks[index] = point;
+        this.dispatchEvent(new Event("targetChange"));
     }
 
     public reset() {

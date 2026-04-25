@@ -3,7 +3,7 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { apTracker } from '../main';
 
-class ReferenceObjectDimension {
+export class ReferenceObjectDimension {
     private width: number | null = NaN;
     private length: number | null = NaN;
     private height: number | null = NaN;
@@ -138,5 +138,3 @@ class ReferenceObjectDimension {
         this.render();
     }
 }
-
-export let refObjDim = new ReferenceObjectDimension();

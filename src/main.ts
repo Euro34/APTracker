@@ -1,45 +1,54 @@
-import { VideoState } from "./core/VideoState";
+import { Matrix } from 'ml-matrix';
+
 import { ReferenceObject } from "./core/ReferenceObject";
+import { Point2D } from "./core/Types";
+import { VideoState } from "./core/VideoState";
 
 import { updateStatus } from "./Module/workflow";
 import { Upload } from "./Module/upload";
 import { SyncEditor } from "./Module/sync";
-// refObjDim
-import {  } from "./Module/reference_object_dimension";
+import { ReferenceObjectDimension } from "./Module/reference_object_dimension";
 import { ReferenceMarker } from "./Module/reference_marker";
 
-// const version = 1;
+const version = 1;
 
-// interface ExportedVideo {
-//     name: string;
-//     type: string;
-//     lastModified: number;
-//     dataUrl?: string; // base64, present only if size allows
-// }
+interface ExportedVideo {
+	name: string;
+	type: string;
+	lastModified: number;
+	dataUrl?: string;
+}
 
-// interface APTrackerExport {
-//     version: 1;
-//     exportedAt: string;
-//     hasVideoData: boolean;
-//     videos: ExportedVideo[];
-//     frameTimestamps: number[][];
-//     trimStates: (number | null)[];
-//     referenceObject: ReferenceObject | null;
-//     referenceCorners: (Point2D | null)[][];
-//     projectionMatrix: number[][];
-// }
+interface ExportedState {
+	frameTimestamps: number[];
+	startFrame: number;
+	endFrame: number;
+	refCurrentTime: number;
+	referenceMarks: (Point2D | null)[];
+	targetMarks: (Point2D | null)[];
+    projectionMatrix: Matrix | null;
+}
+
+interface APTrackerExport {
+	version: 1;
+	exportedAt: string;
+	hasVideoData: boolean;
+	videos: ExportedVideo[];
+	states: ExportedState[];
+	referenceObject: ReferenceObject | null;
+}
 
 class APTracker {
-    // New
     public states: [VideoState, VideoState] = [new VideoState(), new VideoState()];
     public upload = new Upload(this.states);
     public syncEditor = new SyncEditor(this.states);
+    public refObjDim = new ReferenceObjectDimension();
     public referenceObject: ReferenceObject | null = null;
     public refObjMarker: ReferenceMarker = new ReferenceMarker(this.states);
 
     constructor() {
-        // document.getElementById("export")!.addEventListener("click", () => this.exportData());
-        // document.getElementById("export")!.addEventListener("click", () => this.importData());
+        document.getElementById("export")!.addEventListener("click", () => this.exportData());
+        document.getElementById("import")!.addEventListener("click", () => this.importData());
 
         // DEBUG PURPOSE
         document.getElementById("setting")!.addEventListener("click", () => this.output());
@@ -125,140 +134,141 @@ class APTracker {
         }
     }
 
-    // private async exportData(): Promise<void> {
-    //     // Attempt to read each video as base64; fall back to metadata-only if too large
-    //     const videos: ExportedVideo[] = await Promise.all(
-    //         this.uploadedVideos.map(async (file) => {
-    //             const dataUrl = await this.fileToDataUrl(file).catch(() => null);
-    //             return {
-    //                 name: file.name,
-    //                 type: file.type,
-    //                 lastModified: file.lastModified,
-    //                 ...(dataUrl ? { dataUrl } : {}),
-    //             };
-    //         })
-    //     );
+    private async exportData(): Promise<void> {
+        const videos: ExportedVideo[] = await Promise.all(
+            this.states.map(async (state) => {
+                const dataUrl = state.hasVideo
+                    ? await this.fileToDataUrl(state.file).catch(() => null)
+                    : null;
+                return {
+                    name: state.file.name,
+                    type: state.file.type,
+                    lastModified: state.file.lastModified,
+                    ...(dataUrl ? { dataUrl } : {}),
+                };
+            })
+        );
 
-    //     const hasVideoData = videos.every((v) => v.dataUrl !== undefined);
+        const hasVideoData = videos.every((v) => v.dataUrl !== undefined);
 
-    //     const payload: APTrackerExport = {
-    //         version: version,
-    //         exportedAt: new Date().toISOString(),
-    //         hasVideoData,
-    //         videos,
-    //         frameTimestamps: this.frameTimestamps,
-    //         trimStates: this.trimStates,
-    //         referenceObject: this.referenceObject,
-    //         referenceCorners: this.referenceCorners,
-    //         projectionMatrix: this.projectionMatrix,
-    //     };
+        const payload: APTrackerExport = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            hasVideoData,
+            videos,
+            states: this.states.map((s) => ({
+                frameTimestamps: s.frameTimestamps,
+                startFrame: s.startFrame,
+                endFrame: s.endFrame,
+                refCurrentTime: s.refCurrentTime,
+                referenceMarks: s.referenceMarks,
+                targetMarks: s.targetMarks,
+                projectionMatrix: s.projectionMatrix
+            })),
+            referenceObject: this.referenceObject,
+        };
 
-    //     const blob = new Blob([JSON.stringify(payload, null, 2)], {
-    //         type: "application/json",
-    //     });
-    //     const url = URL.createObjectURL(blob);
-    //     const a = document.createElement("a");
-    //     a.href = url;
-    //     a.download = `APTracker_${Date.now()}.json`;
-    //     a.click();
-    //     URL.revokeObjectURL(url);
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `APTracker_${Date.now()}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
 
-    //     if (!hasVideoData) {
-    //         alert(
-    //             "Note: One or more videos exceeded 50 MB and were not embedded.\n" +
-    //             "You will need to re-upload them after importing this file."
-    //         );
-    //     }
-    // }
+        if (!hasVideoData) {
+            alert(
+                "Note: One or more videos exceeded 50 MB and were not embedded.\n" +
+                "You will need to re-upload them after importing this file."
+            );
+        }
+    }
 
-    // private importData(): void {
-    //     const input = document.createElement("input");
-    //     input.type = "file";
-    //     input.accept = ".json,application/json";
+    private importData(): void {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json,application/json";
 
-    //     input.addEventListener("change", async () => {
-    //         const file = input.files?.[0];
-    //         if (!file) return;
+        input.addEventListener("change", async () => {
+            const file = input.files?.[0];
+            if (!file) return;
 
-    //         try {
-    //             const text = await file.text();
-    //             const data: APTrackerExport = JSON.parse(text);
+            try {
+                const text = await file.text();
+                const data: APTrackerExport = JSON.parse(text);
 
-    //             if (data.version !== version) {
-    //                 alert("Incompatible export file version.");
-    //                 return;
-    //             }
+                if (data.version !== version) {
+                    alert("Incompatible export file version.");
+                    return;
+                }
 
-    //             // Restore video Files if base64 data is present
-    //             if (data.hasVideoData && data.videos.length > 0) {
-    //                 this.uploadedVideos = data.videos.map((v) =>this.dataUrlToFile(v.dataUrl!, v));
-    //                 this.frameTimestamps = data.frameTimestamps;
+                // Restore video files into states
+                if (data.hasVideoData && data.videos.length > 0) {
+                    const restoredFiles = data.videos.map((v) => this.dataUrlToFile(v.dataUrl!, v));
+                    restoredFiles.forEach((file, i) => {
+                        this.states[i].updateVideo(file);
+                    });
+                } else {
+                    alert("Session restored (no video data in file).\nPlease re-upload the original video files.");
+                }
 
-    //                 upload.imported(this.uploadedVideos);
-    //                 this.uploadStatus();
-    //             } else {
-    //                 alert("Session restored (no video data in file).\nPlease re-upload the original video files before importing this file.");
-    //             }
+                // Restore per-state data
+                data.states.forEach((saved, i) => {
+                    const state = this.states[i];
+                    if (!state) return;
+                    state.updateTimestamps(saved.frameTimestamps);
+                    state.updateTrim(saved.startFrame, saved.endFrame);
+                    state.refCurrentTime = saved.refCurrentTime;
+                    saved.referenceMarks.forEach((mark, j) => state.updateReferenceMarks(j, mark));
+                    saved.targetMarks.forEach((mark, j) => state.updateTargetMarks(j, mark));
+                    state.projectionMatrix = saved.projectionMatrix
+                    
+                    state.dispatchEvent(new Event("onImport"));
+                });
 
-    //             // Trim
-    //             if (!data.trimStates.every((v) => v === null)) {
-    //                 this.trimStates = data.trimStates;
-    //                 syncEditor.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates);
-    //                 this.syncStatus();
-    //             }
+                // RefObjDim
+                if (data.referenceObject !== null) {
+                    this.updateReferenceObject(data.referenceObject.width, data.referenceObject.length, data.referenceObject.height);
+                    this.refObjDim.imported(data.referenceObject.width, data.referenceObject.length, data.referenceObject.height);
+                }
 
-    //             // RefObjDim
-    //             if (data.referenceObject !== null) {
-    //                 this.referenceObject = data.referenceObject;
-    //                 refObjDim.imported(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
-    //                 this.updateReferenceObject(this.referenceObject?.width ?? NaN, this.referenceObject?.length ?? NaN, this.referenceObject?.height ?? NaN);
-    //             }
+                console.log("Import successful");
+            } catch (err) {
+                alert("Failed to import: file is corrupted or not a valid APTracker export.");
+                console.error(err);
+            }
+        });
+        input.click();
+    }
 
-    //             // RefObjMarker
-    //             if (!data.referenceCorners[0].every((corner) => corner === null) || !data.referenceCorners[1].every((corner) => corner === null)) {
-    //                 this.referenceCorners = data.referenceCorners;
-    //                 refObjMarker.imported(this.uploadedVideos, this.frameTimestamps, this.trimStates, this.referenceCorners);
-    //                 this.updateReferenceCornersStatus();
-    //             }
-    //             this.projectionMatrix = data.projectionMatrix;
+    // Helpers
+    // Read a File as a base64 data URL. Returns null if the file is too large (>50 MB)
+    private async fileToDataUrl(file: File): Promise<string | null> {
+        const MAX_BYTES = 50 * 1024 * 1024; // 50 MB per video
+        if (file.size > MAX_BYTES) return null;
 
-    //             console.log("Import successful");
-    //         } catch (err) {
-    //             alert("Failed to import: file is corrupted or not a valid APTracker export.");
-    //             console.error(err);
-    //         }
-    //     });
-    //     input.click();
-    // }
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+        });
+    }
 
-    // // Helpers
-    // // Read a File as a base64 data URL. Returns null if the file is too large (>50 MB)
-    // private async fileToDataUrl(file: File): Promise<string | null> {
-    //     const MAX_BYTES = 50 * 1024 * 1024; // 50 MB per video
-    //     if (file.size > MAX_BYTES) return null;
-
-    //     return new Promise((resolve, reject) => {
-    //         const reader = new FileReader();
-    //         reader.onload = () => resolve(reader.result as string);
-    //         reader.onerror = () => reject(reader.error);
-    //         reader.readAsDataURL(file);
-    //     });
-    // }
-
-    // // Reconstruct a File from a base64 data URL
-    // private dataUrlToFile(dataUrl: string, meta: ExportedVideo): File {
-    //     const [header, base64] = dataUrl.split(",");
-    //     const mime = header.match(/:(.*?);/)![1];
-    //     const binary = atob(base64);
-    //     const bytes = new Uint8Array(binary.length);
-    //     for (let i = 0; i < binary.length; i++) {
-    //         bytes[i] = binary.charCodeAt(i);
-    //     }
-    //     return new File([bytes], meta.name, {
-    //         type: mime,
-    //         lastModified: meta.lastModified,
-    //     });
-    // }
+    // Reconstruct a File from a base64 data URL
+    private dataUrlToFile(dataUrl: string, meta: ExportedVideo): File {
+        const [header, base64] = dataUrl.split(",");
+        const mime = header.match(/:(.*?);/)![1];
+        const binary = atob(base64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+        }
+        return new File([bytes], meta.name, {
+            type: mime,
+            lastModified: meta.lastModified,
+        });
+    }
 }
 
 

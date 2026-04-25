@@ -14,6 +14,10 @@ export class Upload {
 
 	constructor(states: [VideoState, VideoState]) {
 		this.states = states;
+		this.states.forEach(state => {
+			state.addEventListener("onImport", () => this.render());
+		});
+
 		this.uploadArea.addEventListener("click", () => this.fileInput.click());
 
 		this.fileInput.addEventListener("change", () => {
@@ -119,7 +123,9 @@ export class Upload {
     }
 
 	private render(): void {
-		const count = this.fileCache.size;
+		let count = 0;
+		if (this.states[0].hasVideo) count++;
+		if (this.states[1].hasVideo) count++;
 
 		this.uploadArea.classList.toggle("hidden", count === 2);
 		this.fileInput.classList.toggle("hidden", count === 2);

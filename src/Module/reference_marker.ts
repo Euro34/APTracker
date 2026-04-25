@@ -607,6 +607,7 @@ export class ReferenceMarker {
 		[this.stateA, this.stateB] = states;
 		states.forEach(state => {
 			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
+			state.addEventListener("onImport", () => this.updateCard());
 		});
 		this.refMarkerVideo = new VideoManager(this.stateA);
 
@@ -618,7 +619,7 @@ export class ReferenceMarker {
 		document.getElementById("close-refObjMarker")!.addEventListener("click", () => {
 			document.querySelector(".RefObjMarker")!.classList.remove("active");
 			document.getElementById("loading-screen")!.classList.remove("show");
-			this.updateMain();
+			this.updateCard();
 		});
 
 		this.cornerBtn.forEach((btn,idx) => {
@@ -664,10 +665,6 @@ export class ReferenceMarker {
 			this.vidABtn.classList.remove("active");
 			this.refMarkerVideo.updateVideoState(this.stateB);
 		}
-	}
-
-	public updateMain() {
-		this.updateCard();
 	}
 
 	private updateCard() {
