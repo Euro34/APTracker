@@ -109,7 +109,20 @@ class APTracker {
     }
 
     private updateRefMarkerStatus() {
+        let markedCount = [0, 0];
+        this.states.forEach((state, index) => {
+            state.referenceMarks.forEach((corner) => {
+                if (corner !== null) markedCount[index]++;
+            });
+        });
 
+        if (markedCount[0] >= 6 && markedCount[1] >= 6) {
+            updateStatus("RefCorner", "done");
+        } else if (markedCount[0] > 0 || markedCount[1] > 0) {
+            updateStatus("RefCorner", "inprogress");
+        } else {
+            updateStatus("RefCorner", "");
+        }
     }
 
     // private async exportData(): Promise<void> {
