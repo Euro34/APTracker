@@ -172,7 +172,7 @@ class APTracker {
         a.click();
         URL.revokeObjectURL(url);
 
-        if (!hasVideoData) {
+        if (!hasVideoData && (this.states[0].hasVideo || this.states[1].hasVideo)) {
             alert(
                 "Note: One or more videos exceeded 50 MB and were not embedded.\n" +
                 "You will need to re-upload them after importing this file."
@@ -215,8 +215,14 @@ class APTracker {
                     if (saved.frameTimestamps.length !== 0)state.updateTimestamps(saved.frameTimestamps);
                     if (!Number.isNaN(saved.startFrame) && !Number.isNaN(saved.endFrame)) state.updateTrim(saved.startFrame, saved.endFrame);
                     if (!Number.isNaN(saved.refCurrentTime)) state.refCurrentTime = saved.refCurrentTime;
-                    saved.referenceMarks.forEach((mark, j) => state.updateReferenceMarks(j, mark));
-                    saved.targetMarks.forEach((mark, j) => state.updateTargetMarks(j, mark));
+
+                    let referenceMarksCount = 0;
+                    saved.referenceMarks.forEach((mark) => { if (mark !== null) referenceMarksCount++; });
+                    if (referenceMarksCount !== 0) saved.referenceMarks.forEach((mark, j) => state.updateReferenceMarks(j, mark));
+
+                    let targetMarksCount = 0;
+                    saved.targetMarks.forEach((mark) => { if (mark !== null) targetMarksCount++; })
+                    if (targetMarksCount !== 0) saved.targetMarks.forEach((mark, j) => state.updateTargetMarks(j, mark));
                     
                     state.dispatchEvent(new Event("onImport"));
                 });
