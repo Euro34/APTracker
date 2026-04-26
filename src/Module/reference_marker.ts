@@ -607,6 +607,7 @@ export class ReferenceMarker {
 		[this.stateA, this.stateB] = states;
 		states.forEach(state => {
 			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
+			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
 			state.addEventListener("onImport", () => this.updateCard());
 		});
 		this.refMarkerVideo = new VideoManager(this.stateA);

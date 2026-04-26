@@ -1,4 +1,3 @@
-import { Matrix } from 'ml-matrix';
 import { Point2D } from "./Types";
 
 export class VideoState extends EventTarget {
@@ -11,8 +10,6 @@ export class VideoState extends EventTarget {
 
     private _referenceMarks: (Point2D | null)[] = Array(8).fill(null);
     private _targetMarks: (Point2D | null)[] = [];
-
-    public projectionMatrix: Matrix | null = null
 
     get file(): File { return this._file; }
     get frameTimestamps(): number[] { return this._frameTimestamps; }

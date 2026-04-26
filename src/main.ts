@@ -1,5 +1,3 @@
-import { Matrix } from 'ml-matrix';
-
 import { ReferenceObject } from "./core/ReferenceObject";
 import { Point2D } from "./core/Types";
 import { VideoState } from "./core/VideoState";
@@ -26,7 +24,6 @@ interface ExportedState {
 	refCurrentTime: number;
 	referenceMarks: (Point2D | null)[];
 	targetMarks: (Point2D | null)[];
-    projectionMatrix: Matrix | null;
 }
 
 interface APTrackerExport {
@@ -163,7 +160,6 @@ class APTracker {
                 refCurrentTime: s.refCurrentTime,
                 referenceMarks: s.referenceMarks,
                 targetMarks: s.targetMarks,
-                projectionMatrix: s.projectionMatrix
             })),
             referenceObject: this.referenceObject,
         };
@@ -216,12 +212,11 @@ class APTracker {
                 data.states.forEach((saved, i) => {
                     const state = this.states[i];
                     if (!state) return;
-                    state.updateTimestamps(saved.frameTimestamps);
-                    state.updateTrim(saved.startFrame, saved.endFrame);
-                    state.refCurrentTime = saved.refCurrentTime;
+                    if (saved.frameTimestamps.length !== 0)state.updateTimestamps(saved.frameTimestamps);
+                    if (!Number.isNaN(saved.startFrame) && !Number.isNaN(saved.endFrame)) state.updateTrim(saved.startFrame, saved.endFrame);
+                    if (!Number.isNaN(saved.refCurrentTime)) state.refCurrentTime = saved.refCurrentTime;
                     saved.referenceMarks.forEach((mark, j) => state.updateReferenceMarks(j, mark));
                     saved.targetMarks.forEach((mark, j) => state.updateTargetMarks(j, mark));
-                    state.projectionMatrix = saved.projectionMatrix
                     
                     state.dispatchEvent(new Event("onImport"));
                 });

@@ -20,8 +20,6 @@ class VideoHandler {
 
 	private disabled = false;
 	public onTrimChange: ((which: "start" | "end") => void) | null = null;
-
-	public updateCard: (() => void) | null = null;
     
     get hasVideo(): boolean {return this.state.hasVideo && this.state.hasTimestamps; }
     get totalFrames(): number { return this.state.frameTimestamps.length; }
@@ -87,7 +85,7 @@ class VideoHandler {
 		this.setDefault();
 
 		state.addEventListener("onReset", () => this.reset());
-		state.addEventListener("timestampsChange", () =>  { this.updateCard?.(); this.updateVideo(); });
+		state.addEventListener("timestampsChange", () =>  { this.updateVideo(); });
 	}
 
 	
@@ -329,8 +327,6 @@ class VideoHandler {
 		this.fpsDisplay.textContent = "- fps";
 		this.video.src = "";
 		this.video.load();
-		this.startFrame = 0;
-		this.endFrame = 0;
 		this.disabled = false;
 		this.setDefault();
 	}
@@ -373,8 +369,10 @@ export class SyncEditor {
 		this.videoA = new VideoHandler("A", states[0]);
 		this.videoB = new VideoHandler("B", states[1]);
 
-		this.videoA.updateCard = () => this.updateCard();
-		this.videoB.updateCard = () => this.updateCard();
+		states.forEach(state => {
+			state.addEventListener("onImport", () => this.updateCard());
+			state.addEventListener("timestampsChange", () => this.updateCard());
+		})
 
 		document.getElementById("open-sync-editor")!.addEventListener("click", () => {
 			document.querySelector(".SyncEditor")!.classList.add("active");

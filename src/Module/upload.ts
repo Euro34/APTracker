@@ -15,7 +15,7 @@ export class Upload {
 	constructor(states: [VideoState, VideoState]) {
 		this.states = states;
 		this.states.forEach(state => {
-			state.addEventListener("onImport", () => this.render());
+			state.addEventListener("onImport", () => this.import());
 		});
 
 		this.uploadArea.addEventListener("click", () => this.fileInput.click());
@@ -41,8 +41,8 @@ export class Upload {
 
 	private handleNewFiles(newFiles: File[]): void {
 		const videoFiles = newFiles.filter((f) => f.type.startsWith("video/"));
-		const slots = 2 - this.fileCache.size;
-		const toAdd = videoFiles.slice(0, slots);
+		const emptySlots = 2 - this.fileCache.size;
+		const toAdd = videoFiles.slice(0, emptySlots);
 
 		for (const file of toAdd) {
 			// Prevent duplicate file
@@ -123,9 +123,7 @@ export class Upload {
     }
 
 	private render(): void {
-		let count = 0;
-		if (this.states[0].hasVideo) count++;
-		if (this.states[1].hasVideo) count++;
+		const count = this.fileCache.size;
 
 		this.uploadArea.classList.toggle("hidden", count === 2);
 		this.fileInput.classList.toggle("hidden", count === 2);
@@ -166,5 +164,16 @@ export class Upload {
 			card.append(video, filename, removeBtn);
 			this.previewGrid.appendChild(card);
 		});
+	}
+
+	private import() {
+		const files = this.states.filter((s) => s.hasVideo).map((s) => s.file);
+		for (const file of files) {
+			// Prevent duplicate file
+			if (!this.fileCache.has(file.name)) {
+				this.fileCache.set(file.name, { file });
+			}
+		}
+		this.render();
 	}
 }
