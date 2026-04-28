@@ -1,4 +1,4 @@
-.card#RefMarks .card-header .right button {
+.card#TargetMarks .card-header .right button {
     padding: 5px 15px;
     border: 1px solid var(--link-border-color);
     border-radius: 5px;
@@ -8,64 +8,12 @@
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.card#RefMarks .card-header .right button:hover {
+.card#TargetMarks .card-header .right button:hover {
     background-color: var(--link-border-color);
 }
 
-.card#RefMarks .card-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    width: 100%;
-    gap: 20px;
-}
-
-.card#RefMarks .camera {
-	display: flex;
-    flex-direction: column;
-    width: 100%;
-    padding: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 15px;
-    gap: 20px;
-}
-
-.card#RefMarks .camera.inprogress {
-	border-color: var(--warning-color);
-}
-
-.card#RefMarks .camera.done {
-	border-color: var(--success-color);
-}
-
-.card#RefMarks .camera .head {
-	display: flex;
-	justify-content: space-between;
-	padding: 0 3px;
-}
-
-.corner-statuses-container {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	gap: 10px;
-}
-
-.corner-status {
-	display: flex;
-	justify-content: center;
-	align-items: center;
-	padding: 3px 10px;
-	border: 1px solid var(--border-color);
-    border-radius: 15px;
-	color: var(--text2-color);
-	font-size: var(--text-xxs);
-}
-
-.corner-status.done {
-	border-color: var(--success-color);
-}
-
-/* Reference Object Marker */
-.ReferenceMarker {
+/* Target Marker */
+.TargetMarker {
     position: fixed;
     z-index: 100;
     display: none;
@@ -77,11 +25,11 @@
     scrollbar-width: none;
 }
 
-.ReferenceMarker.active {
+.TargetMarker.active {
     display: block;
 }
 
-.ReferenceMarker .content {
+.TargetMarker .content {
     display: flex;
 	overflow: hidden;
 	flex: 1;
@@ -89,7 +37,7 @@
     height: 100%;
 }
 
-.ReferenceMarker .sidebar {
+.TargetMarker .sidebar {
 	display: flex;
 	overflow-y: auto;
 	flex-direction: column;
@@ -103,60 +51,8 @@
 	gap: 10px;
 }
 
-/* 3D Widget */
-.ref-3d-widget {
-	overflow: hidden;
-	flex-shrink: 0;
-	width: 100%;
-	height: auto;
-	border: 1px solid var(--border-color);
-	border-radius: 20px;
-    aspect-ratio: 1;
-}
-
-.ref-3d-widget canvas {
-	display: block;
-	width: 56px;
-	height: 56px;
-}
-
-/* Corner Selector */
-.corner-selector {
-	display: grid;
-	grid-template-columns: 1fr 1fr;
-	box-sizing: border-box;
-	width: 100%;
-	gap: 10px;
-}
-
-.corner-selector .corner-row {
-	display: flex;
-	gap: 4px;
-}
-
-.corner-selector .corner-btn {
-	position: relative;
-	flex: 1;
-	padding: 7px 0;
-	border: 1px solid var(--border-color);
-	border-radius: 5px;
-	background-color: var(--background3-color);
-	cursor: pointer;
-	transition: background-color 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
-}
-
-.corner-selector .corner-btn:hover {
-	background-color: var(--border-color);
-}
-
-.corner-selector .corner-btn.selected {
-	border-color: var(--border-color);
-	background-color: var(--border-color);
-	box-shadow: 0 0 0 1px var(--accent1-color);
-}
-
 /* Video Selector */
-.ReferenceMarker .vid-selector {
+.TargetMarker .vid-selector {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	box-sizing: border-box;
@@ -164,7 +60,7 @@
 	gap: 5px;
 }
 
-.ReferenceMarker .vid-selector .vid-btn {
+.TargetMarker .vid-selector .vid-btn {
 	width: 100%;
 	padding: 5px 0;
 	border: 1px solid var(--border-color);
@@ -174,22 +70,23 @@
 	transition: background-color 0.15s, color 0.15s;
 }
 
-.ReferenceMarker .vid-selector .vid-btn:hover {
+.TargetMarker .vid-selector .vid-btn:hover {
 	background-color: var(--border-color);
 }
 
-.ReferenceMarker .vid-selector .vid-btn.active {
+.TargetMarker .vid-selector .vid-btn.active {
 	border-color: var(--accent1-color);
 	background-color: var(--border-color);
 }
 
-.ReferenceMarker .vid-selector .vid-btn.disabled {
+.TargetMarker .vid-selector .vid-btn.disabled {
 	background-color: var(--background3-color);
 	cursor: not-allowed;
 	opacity: 0.7;
 }
 
-.ref-viewport {
+/* ViewPort */
+.target-viewport {
 	position: relative;
 	display: flex;
 	overflow: hidden;
@@ -200,18 +97,18 @@
 	cursor: default;
 }
 
-.ref-viewport.video-loaded {
+.target-viewport.video-loaded {
 	cursor: crosshair;
 }
 
-.ref-viewport .video-container {
+.target-viewport .video-container {
 	position: relative;
 	z-index: 5;
 	display: inline-block;
 	/* size controlled by JS based on zoom/pan */
 }
 
-.ref-viewport .video-container video {
+.target-viewport .video-container video {
 	display: block;
 	max-width: none;
 	max-height: none;
@@ -219,7 +116,7 @@
 	/* width/height set by JS */
 }
 
-.ref-viewport .video-container canvas {
+.target-viewport .video-container canvas {
 	position: absolute;
 	top: 0;
 	left: 0;
@@ -228,7 +125,7 @@
 	/* width/height set by JS */
 }
 
-.ref-viewport .empty-video {
+.target-viewport .empty-video {
 	position: absolute;
 	z-index: 1;
 	display: flex;
@@ -240,11 +137,12 @@
 	inset: 0;
 }
 
-.ref-viewport.video-loaded .empty-video {
+.target-viewport.video-loaded .empty-video {
 	display: none;
 }
 
-.ReferenceMarker .player {
+/* Player */
+.TargetMarker .player {
 	position: absolute;
 	bottom: 30px;
 	z-index: 10;
@@ -258,9 +156,10 @@
 	border-radius: 15px;
 	background-color: var(--background3-color);
 	cursor: default;
+    gap: 10px
 }
 
-.ReferenceMarker .player button{
+.TargetMarker .player button{
 	width: 45px;
 	padding: 5px 15px;
 	border: 1px solid var(--border-color);
@@ -272,11 +171,11 @@
 	transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-.ReferenceMarker .player button:hover {
+.TargetMarker .player button:hover {
 	background-color: var(--border-color);
 }
 
-.ReferenceMarker .play-bar {
+.TargetMarker .play-bar {
 	position: relative;
 	flex: 1;
 	height: 5px;
@@ -285,7 +184,7 @@
 	background-color: var(--border-color);
 }
 
-.ReferenceMarker .play-bar .playhead {
+.TargetMarker .play-bar .playhead {
 	position: absolute;
 	top: 50%;
 	left: 0;
@@ -297,12 +196,12 @@
 	transform: translate(-50%, -50%);
 }
 
-.ReferenceMarker .time {
+.TargetMarker .time {
 	width: 120px;
 	text-align: center;
 }
 
-.ReferenceMarker button.delete {
+.TargetMarker button.delete {
 	position: absolute;
 	top: 30px;
 	left: 30px;
@@ -317,11 +216,11 @@
 	background-color: var(--danger-color);
 }
 
-.ReferenceMarker button.delete:hover {
+.TargetMarker button.delete:hover {
 	background-color: var(--danger-hover-color);
 }
 
-.ReferenceMarker button.delete img {
+.TargetMarker button.delete img {
 	width: 30px;
 	height: 30px;
 	filter: invert(100%);

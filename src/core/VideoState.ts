@@ -7,6 +7,7 @@ export class VideoState extends EventTarget {
     private _startFrame = NaN;
     private _endFrame = NaN;
     private _refCurrentTime = NaN;
+    private _targetCurrentTime = NaN;
 
     private _referenceMarks: (Point2D | null)[] = Array(8).fill(null);
     private _targetMarks: (Point2D | null)[] = [];
@@ -16,6 +17,7 @@ export class VideoState extends EventTarget {
     get startFrame(): number { return this._startFrame; }
 	get endFrame(): number { return this._endFrame; }
     get refCurrentTime(): number { return this._refCurrentTime; }
+    get targetCurrencTime(): number { return this._targetCurrentTime; }
     get referenceMarks(): (Point2D | null)[] { return this._referenceMarks; }
     get targetMarks(): (Point2D | null)[] { return this._targetMarks; }
     
@@ -29,6 +31,7 @@ export class VideoState extends EventTarget {
     set startFrame(v: number) { this._startFrame = Math.max(0, Math.min(v, this._frameTimestamps.length - 1)); }
 	set endFrame(v: number) { this._endFrame = Math.max(0, Math.min(v, this._frameTimestamps.length - 1)); }
     set refCurrentTime(time: number) { this._refCurrentTime = Math.min(Math.max(time, this.startTime), this.endTime); }
+    set targetCurrentTime(time: number) { this._targetCurrentTime = Math.min(Math.max(time, this.startTime), this.endTime); }
 
     public updateVideo(file: File) {
         this._file = file;
@@ -42,6 +45,7 @@ export class VideoState extends EventTarget {
             this.startFrame = 0;
             this.endFrame = timestamps.length > 0 ? timestamps.length - 1 : 0;
             this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
+            this.targetCurrentTime = Math.min(Math.max(this.targetCurrentTime, this.startTime), this.endTime);
         } else {
             this._frameTimestamps = timestamps;
         }
@@ -53,6 +57,7 @@ export class VideoState extends EventTarget {
         if (startFrame) this.startFrame = startFrame;
         if (endFrame) this.endFrame = endFrame;
         this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
+        this.targetCurrentTime = Math.min(Math.max(this.targetCurrentTime, this.startTime), this.endTime);
         this.dispatchEvent(new Event("trimChange"));
         // console.log("Trim\n" + this.toString());
     }
@@ -75,6 +80,7 @@ export class VideoState extends EventTarget {
         this._startFrame = NaN;
         this._endFrame = NaN;
         this._refCurrentTime = NaN;
+        this._targetCurrentTime = NaN;
         this.dispatchEvent(new Event("onReset"));
         // console.log("Reset state\n" + this.toString());
     }
@@ -85,6 +91,7 @@ export class VideoState extends EventTarget {
         startFrame: number;
         endFrame: number;
         refCurrentTime: number;
+        refTargetTime: number;
         referenceMarks: (Point2D | null)[];
         targetObjMarks: (Point2D | null)[];
     } {
@@ -94,6 +101,7 @@ export class VideoState extends EventTarget {
 			startFrame: this.startFrame,
 			endFrame: this.endFrame,
 			refCurrentTime: this.refCurrentTime,
+            refTargetTime: this.targetCurrencTime,
 			referenceMarks: this.referenceMarks,
             targetObjMarks: this.targetMarks,
 		}
@@ -105,6 +113,7 @@ export class VideoState extends EventTarget {
         startFrame: number;
         endFrame: number;
         refCurrentTime: number;
+        targetCurrentTime: number;
         referenceMarks: (Point2D | null)[];
         targetObjMarks: (Point2D | null)[];
     }) {
@@ -113,6 +122,7 @@ export class VideoState extends EventTarget {
         this._startFrame = dict.startFrame;
         this._endFrame = dict.endFrame;
         this._refCurrentTime = dict.refCurrentTime;
+        this._targetCurrentTime = dict.targetCurrentTime;
         this._referenceMarks = dict.referenceMarks;
         this._targetMarks = dict.targetObjMarks;
         this.dispatchEvent(new Event("onUpload"))

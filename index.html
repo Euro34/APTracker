@@ -24,6 +24,7 @@
         <link rel="stylesheet" href="src/assets/css/sync.css">
         <link rel="stylesheet" href="src/assets/css/reference_object_dimension.css">
         <link rel="stylesheet" href="src/assets/css/reference_marker.css">
+        <link rel="stylesheet" href="src/assets/css/target_marker.css">
 
         <!-- Title -->
         <title>AP Tracker</title>
@@ -277,7 +278,7 @@
                             <h3 class="card-title">Mark target object</h3>
                         </div>
                         <div class="right">
-
+                            <button id="open-targetMarker">Reference Object Marker</button>
                         </div>
                     </div>
                     <div class="card-content">
@@ -477,7 +478,7 @@
                 </div>
 			</div>
             <div class="ref-viewport" id="ref-viewport">
-                <div class="video-container" id="video-container-ref">
+                <div class="video-container" id="ref-video-container">
                     <video id="ref-video" muted playsinline></video>
                     <canvas id="ref-mark-overlay"></canvas>
                     <canvas id="ref-guide-overlay"></canvas>
@@ -491,6 +492,46 @@
                     </div>
                     <div class="time">0.00 / 0.00</div>
                 </div>
+                <button class="delete" title="Delete Mark"><img src="src/assets/glyph/trash.svg" alt="Delete"></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="TargetMarker" id="TargetMarker">
+        <div class="toolbar">
+            <div class="toolbar-left">
+                <img id="logo" src="AP_Logo.svg" alt="AP Tracker Logo">
+                <h1>Target Marker</h1>
+            </div>
+            <div class="toolbar-right">
+                <button id="close-targetMarker"><img src="src/assets/glyph/cross.svg" alt="Close"></button>
+                <button id="info"><img id="info-icon" src="src/assets/glyph/info.svg" alt="Info"></button>
+            </div>
+        </div>
+        <div class="content">
+            <div class="sidebar" id="targetMarker-sidebar">
+                <div class="auto-track">Auto Tracking</div>
+                <div class="vid-selector" id="vid-selector">
+                    <button class="vid-btn active" id="vid-btn-a" data-vid="a">Camera A</button>
+                    <button class="vid-btn" id="vid-btn-b" data-vid="b">Camera B</button>
+                </div>
+			</div>
+            <div class="target-viewport" id="target-viewport">
+                <div class="video-container" id="target-video-container">
+                    <video id="target-video" muted playsinline></video>
+                    <canvas id="target-mark-overlay"></canvas>
+                </div>
+                <div class="empty-video">No video</div>
+                <div class="player">
+                    <button class="back">⏴&#xFE0E;</button>
+                    <button class="play">▶&#xFE0E;</button>
+                    <button class="forward">⏵&#xFE0E;</button>
+                    <div class="play-bar">
+                        <div class="playhead"></div>
+                    </div>
+                    <div class="time">0.00 / 0.00</div>
+                </div>
+                
                 <button class="delete" title="Delete Mark"><img src="src/assets/glyph/trash.svg" alt="Delete"></button>
             </div>
         </div>

@@ -7,6 +7,7 @@ import { Upload } from "./Module/upload";
 import { SyncEditor } from "./Module/sync";
 import { ReferenceObjectDimension } from "./Module/reference_object_dimension";
 import { ReferenceMarker } from "./Module/reference_marker";
+import { TargetMarker } from "./Module/target_marker";
 
 const version = 1;
 
@@ -22,6 +23,7 @@ interface ExportedState {
 	startFrame: number;
 	endFrame: number;
 	refCurrentTime: number;
+    targetCurrentTime: number;
 	referenceMarks: (Point2D | null)[];
 	targetMarks: (Point2D | null)[];
 }
@@ -37,11 +39,13 @@ interface APTrackerExport {
 
 class APTracker {
     public states: [VideoState, VideoState] = [new VideoState(), new VideoState()];
+    public referenceObject: ReferenceObject | null = null;
+    
     public upload = new Upload(this.states);
     public syncEditor = new SyncEditor(this.states);
     public refObjDim = new ReferenceObjectDimension();
-    public referenceObject: ReferenceObject | null = null;
-    public refObjMarker: ReferenceMarker = new ReferenceMarker(this.states);
+    public referenceMarker = new ReferenceMarker(this.states);
+    public targetMarker = new TargetMarker(this.states);
 
     constructor() {
         document.getElementById("export")!.addEventListener("click", () => this.exportData());
@@ -111,7 +115,7 @@ class APTracker {
             }
         }
 
-        this.refObjMarker.updateBoxDimensions(width, length, height);
+        this.referenceMarker.updateBoxDimensions(width, length, height);
     }
 
     private updateRefMarkerStatus() {
@@ -158,6 +162,7 @@ class APTracker {
                 startFrame: s.startFrame,
                 endFrame: s.endFrame,
                 refCurrentTime: s.refCurrentTime,
+                targetCurrentTime: s.targetCurrencTime,
                 referenceMarks: s.referenceMarks,
                 targetMarks: s.targetMarks,
             })),
@@ -215,6 +220,7 @@ class APTracker {
                     if (saved.frameTimestamps.length !== 0)state.updateTimestamps(saved.frameTimestamps);
                     if (!Number.isNaN(saved.startFrame) && !Number.isNaN(saved.endFrame)) state.updateTrim(saved.startFrame, saved.endFrame);
                     if (!Number.isNaN(saved.refCurrentTime)) state.refCurrentTime = saved.refCurrentTime;
+                    if (!Number.isNaN(saved.targetCurrentTime)) state.targetCurrentTime = saved.targetCurrentTime;
 
                     let referenceMarksCount = 0;
                     saved.referenceMarks.forEach((mark) => { if (mark !== null) referenceMarksCount++; });
