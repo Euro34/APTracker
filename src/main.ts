@@ -162,7 +162,7 @@ class APTracker {
                 startFrame: s.startFrame,
                 endFrame: s.endFrame,
                 refCurrentTime: s.refCurrentTime,
-                targetCurrentTime: s.targetCurrencTime,
+                targetCurrentTime: s.targetCurrentTime,
                 referenceMarks: s.referenceMarks,
                 targetMarks: s.targetMarks,
             })),
@@ -219,8 +219,10 @@ class APTracker {
                     if (!state) return;
                     if (saved.frameTimestamps.length !== 0)state.updateTimestamps(saved.frameTimestamps);
                     if (!Number.isNaN(saved.startFrame) && !Number.isNaN(saved.endFrame)) state.updateTrim(saved.startFrame, saved.endFrame);
+                    console.log(state.refCurrentTime, state.targetCurrentTime);
                     if (!Number.isNaN(saved.refCurrentTime)) state.refCurrentTime = saved.refCurrentTime;
                     if (!Number.isNaN(saved.targetCurrentTime)) state.targetCurrentTime = saved.targetCurrentTime;
+                    console.log(state.refCurrentTime, state.targetCurrentTime);
 
                     let referenceMarksCount = 0;
                     saved.referenceMarks.forEach((mark) => { if (mark !== null) referenceMarksCount++; });

@@ -17,7 +17,7 @@ export class VideoState extends EventTarget {
     get startFrame(): number { return this._startFrame; }
 	get endFrame(): number { return this._endFrame; }
     get refCurrentTime(): number { return this._refCurrentTime; }
-    get targetCurrencTime(): number { return this._targetCurrentTime; }
+    get targetCurrentTime(): number { return this._targetCurrentTime; }
     get referenceMarks(): (Point2D | null)[] { return this._referenceMarks; }
     get targetMarks(): (Point2D | null)[] { return this._targetMarks; }
     
@@ -91,7 +91,7 @@ export class VideoState extends EventTarget {
         startFrame: number;
         endFrame: number;
         refCurrentTime: number;
-        refTargetTime: number;
+        targetCurrentTime: number;
         referenceMarks: (Point2D | null)[];
         targetObjMarks: (Point2D | null)[];
     } {
@@ -101,7 +101,7 @@ export class VideoState extends EventTarget {
 			startFrame: this.startFrame,
 			endFrame: this.endFrame,
 			refCurrentTime: this.refCurrentTime,
-            refTargetTime: this.targetCurrencTime,
+            targetCurrentTime: this.targetCurrentTime,
 			referenceMarks: this.referenceMarks,
             targetObjMarks: this.targetMarks,
 		}
@@ -125,12 +125,12 @@ export class VideoState extends EventTarget {
         this._targetCurrentTime = dict.targetCurrentTime;
         this._referenceMarks = dict.referenceMarks;
         this._targetMarks = dict.targetObjMarks;
-        this.dispatchEvent(new Event("onUpload"))
-        this.dispatchEvent(new Event("timestampsChange"))
-        this.dispatchEvent(new Event("trimChange"))
+        this.dispatchEvent(new Event("onUpload"));
+        this.dispatchEvent(new Event("timestampsChange"));
+        this.dispatchEvent(new Event("trimChange"));
     }
 
     public toString(): string {
-        return `file = ${this._file.name}\nframes count=${this._frameTimestamps.length}\nstartFrame=${this.startFrame}\nendFrame=${this.endFrame}\ncurrentTime=${this.refCurrentTime}\nrefObjMarks=${this._referenceMarks.map(m => m ? m.toString() : 'null').join(', ')}\ntargObjMarks=${this._targetMarks.map(m => m ? m.toString() : 'null').join(', ')}`;
+        return `file = ${this._file.name}\nframes count=${this._frameTimestamps.length}\nstartFrame=${this.startFrame}\nendFrame=${this.endFrame}\nrefCurrentTime=${this._refCurrentTime}\ntargetCurrentTime=${this._targetCurrentTime}\nreferenceMarks=${this._referenceMarks.map(m => m ? m.toString() : 'null').join(', ')}\ntargetMarks=${this._targetMarks.map(m => m ? m.toString() : 'null').join(', ')}`;
     }
 }

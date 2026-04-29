@@ -45,7 +45,6 @@ class VideoManager {
 
 	constructor(state: VideoState) {
 		this.state = state;
-		this.state.addEventListener('trimChange', () => this.video.currentTime = this.state.refCurrentTime);
 
 		this.playBtn.addEventListener('click', () => this.togglePlay());
 		this.deleteBtn.addEventListener('click', () => this.deleteMark(this.selectedCorner));
