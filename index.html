@@ -18,8 +18,8 @@
 
         <!-- Title -->
         <title>AP Tracker</title>
-      <script type="module" crossorigin src="/APTracker/assets/index-BYBI7Z4t.js"></script>
-      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-IwMQcKJG.css">
+      <script type="module" crossorigin src="/APTracker/assets/index-C6wmqdup.js"></script>
+      <link rel="stylesheet" crossorigin href="/APTracker/assets/index-DnLkHN2m.css">
     </head>
     <body>
         <div class="toolbar">
@@ -501,8 +501,11 @@
             </div>
         </div>
         <div class="content">
-            <div class="sidebar" id="targetMarker-sidebar">
-                <div class="auto-track">Auto Tracking</div>
+            <div class="sidebar">
+                <div class="auto-track">
+                    Auto Tracking
+                </div>
+                <button id="auto-forward" title="Forwading by 1 frame after marked">Auto Forwarding</button>
                 <div class="vid-selector" id="vid-selector">
                     <button class="vid-btn active" id="vid-btn-a" data-vid="a">Camera A</button>
                     <button class="vid-btn" id="vid-btn-b" data-vid="b">Camera B</button>
@@ -521,7 +524,10 @@
                     <div class="play-bar">
                         <div class="playhead"></div>
                     </div>
-                    <div class="time">0.00 / 0.00</div>
+                    <div class="time-frame">
+                        <div class="time">0.00 / 0.00</div>
+                        <div class="frame">0/0</div>
+                    </div>
                 </div>
                 
                 <button class="delete" title="Delete Mark"><img src="data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='utf-8'?%3e%3c!--%20Uploaded%20to:%20SVG%20Repo,%20www.svgrepo.com,%20Generator:%20SVG%20Repo%20Mixer%20Tools%20--%3e%3csvg%20width='800px'%20height='800px'%20viewBox='0%200%2024%2024'%20fill='none'%20xmlns='http://www.w3.org/2000/svg'%3e%3cpath%20d='M10%2012V17'%20stroke='%23000000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3cpath%20d='M14%2012V17'%20stroke='%23000000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3cpath%20d='M4%207H20'%20stroke='%23000000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3cpath%20d='M6%2010V18C6%2019.6569%207.34315%2021%209%2021H15C16.6569%2021%2018%2019.6569%2018%2018V10'%20stroke='%23000000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3cpath%20d='M9%205C9%203.89543%209.89543%203%2011%203H13C14.1046%203%2015%203.89543%2015%205V7H9V5Z'%20stroke='%23000000'%20stroke-width='2'%20stroke-linecap='round'%20stroke-linejoin='round'/%3e%3c/svg%3e" alt="Delete"></button>
