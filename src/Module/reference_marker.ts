@@ -87,12 +87,17 @@ class VideoManager {
 		this.video.load();
 		
 		this.video.addEventListener('loadeddata', () => {
-			this.video.currentTime = this.state.refCurrentTime
+			this.video.currentTime = this.state.refCurrentTime;
 			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
 			this.drawMarks();
 		}, { once: true });
+	}
+
+	public updateCurrentTime() {
+		this.video.currentTime = this.state.refCurrentTime;
+		this.updatePlayhead();
 	}
 
 	public updateSelectedCorner(index: number) {
@@ -608,6 +613,8 @@ export class ReferenceMarker {
 		this.videoManager = new VideoManager(this.stateA);
 		states.forEach(state => {
 			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
+			state.addEventListener("timestampsChange", () => this.videoManager.updateCurrentTime())
+			state.addEventListener("trimChange", () => this.videoManager.updateCurrentTime())
 			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
 			state.addEventListener("onImport", () => this.updateCard());
 		});

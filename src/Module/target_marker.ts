@@ -42,7 +42,7 @@ class VideoManager {
         this.video.addEventListener('timeupdate', () => this.updatePlayhead());
 		
 		this.autoForwardBtn.addEventListener("click", () => {
-			this.autoForward = !this.autoForward
+			this.autoForward = !this.autoForward;
 			this.autoForwardBtn.classList.toggle("active", this.autoForward);
 		})
 
@@ -79,15 +79,19 @@ class VideoManager {
 		this.video.load();
 		
 		this.video.addEventListener('loadeddata', () => {
-			this.video.currentTime = this.state.targetCurrentTime
-			// this.updatePlayhead();
+			this.video.currentTime = this.state.targetCurrentTime;
+			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
-			this.drawMarks();
 		}, { once: true });
 	}
 
-    public updateSelectedFrame(index: number) {
+	public updateCurrentTime() {
+		this.video.currentTime = this.state.targetCurrentTime;
+		this.updatePlayhead();
+	}
+
+    private updateSelectedFrame(index: number) {
         this.selectedFrame = index;
 		this.drawMarks();
     }
@@ -111,8 +115,8 @@ class VideoManager {
 		this.updatePlayBtn(false);
 	}
 
-	private seekBack() {this.seekToFrame(this.currentFrame - 1);}
-	private seekForward() {this.seekToFrame(this.currentFrame + 1);}
+	private seekBack() { this.seekToFrame(this.currentFrame - 1); }
+	private seekForward() { this.seekToFrame(this.currentFrame + 1); }
 
 	public seekToFrame(frame: number) {
 		if (!this.state.hasVideo) return;
@@ -199,16 +203,16 @@ class VideoManager {
 			const cx = mark.x * W;
 			const cy = mark.y * H;
 			const radius = (i === this.selectedFrame ? this.dotRadius * 1.5 : this.dotRadius) * S;
-			const lightness = 1 - Math.min(Math.abs(this.selectedFrame - i), 5) * 0.15;
+			const opacity = 1 - Math.min(Math.abs(this.selectedFrame - i), 5) * 0.15;
 
 			ctx.beginPath();
 			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-			ctx.fillStyle = `rgba(250,250,250,${lightness})`;
+			ctx.fillStyle = `rgba(250,250,250,${opacity})`;
 			ctx.fill();
 
 			ctx.beginPath();
 			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-			ctx.strokeStyle = `rgba(0,0,0,${lightness})`;
+			ctx.strokeStyle = `rgba(0,0,0,${opacity})`;
 			ctx.lineWidth = 1.5 * S;
 			ctx.stroke();
 		}
@@ -254,6 +258,8 @@ export class TargetMarker {
         this.videoManager = new VideoManager(this.stateA);
         states.forEach(state => {
 			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
+			state.addEventListener("timestampsChange", () => this.videoManager.updateCurrentTime());
+			state.addEventListener("trimChange", () => this.videoManager.updateCurrentTime());
 			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
 			state.addEventListener("onImport", () => this.updateCard());
 		});

@@ -177,7 +177,7 @@ async function extractFrameTimestamps(file: File, signal?: AbortSignal, onProgre
                     }
                     if (signal?.aborted && !isStillNeeded) return;
 
-                    timestamps.push(parseFloat(tsMatch[1]));
+                    timestamps.push(parseFloat(tsMatch[1])+0.001); // Offset by 1ms avoid rounding error
                     processedFrames++;
                     if (totalFrames > 0) {
                         const p = (processedFrames / totalFrames) * 100;

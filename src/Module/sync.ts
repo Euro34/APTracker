@@ -538,8 +538,8 @@ export class SyncEditor {
 
 	private updateCard() {
 		if (this.videoA.hasVideo) {
-			const startATime = this.videoA.state.timeAtFrame(this.videoA.startFrame);
-			const endATime = this.videoA.state.timeAtFrame(this.videoA.endFrame);
+			const startATime = this.videoA.state.timeAtFrame(this.videoA.startFrame) - 0.001;
+			const endATime = this.videoA.state.timeAtFrame(this.videoA.endFrame) - 0.001;
 			this.startA.textContent = startATime.toFixed(3);
 			this.endA.textContent = endATime.toFixed(3);
 			this.durationA.textContent = (endATime - startATime).toFixed(3);
@@ -550,8 +550,8 @@ export class SyncEditor {
 		}
 
 		if (this.videoB.hasVideo) {
-			const startBTime = this.videoB.state.timeAtFrame(this.videoB.startFrame);
-			const endBTime = this.videoB.state.timeAtFrame(this.videoB.endFrame);
+			const startBTime = this.videoB.state.timeAtFrame(this.videoB.startFrame) - 0.001;
+			const endBTime = this.videoB.state.timeAtFrame(this.videoB.endFrame) - 0.001;
 			this.startB.textContent = startBTime.toFixed(3);
 			this.endB.textContent = endBTime.toFixed(3);
 			this.durationB.textContent = (endBTime - startBTime).toFixed(3);
