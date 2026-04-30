@@ -27,11 +27,22 @@ export class VideoState extends EventTarget {
     get startTime(): number { return this._frameTimestamps[this._startFrame] ?? 0; }
     get endTime(): number { return this._frameTimestamps[this._endFrame] ?? 0; }
     get duration(): number { return this.endTime - this.startTime; }
+    get totalFrames(): number { return this._frameTimestamps.length }
 
     set startFrame(v: number) { this._startFrame = Math.max(0, Math.min(v, this._frameTimestamps.length - 1)); }
 	set endFrame(v: number) { this._endFrame = Math.max(0, Math.min(v, this._frameTimestamps.length - 1)); }
     set refCurrentTime(time: number) { this._refCurrentTime = Math.min(Math.max(time, this.startTime), this.endTime); }
     set targetCurrentTime(time: number) { this._targetCurrentTime = Math.min(Math.max(time, this.startTime), this.endTime); }
+
+    public frameAtTime(time: number): number {
+		let result = this.frameTimestamps.findIndex(t => t >= time)
+		if (result === -1) return this.totalFrames - 1;
+		return result;
+	}
+
+    public timeAtFrame(frame: number): number {
+		return this.frameTimestamps[frame];
+	}
 
     public updateVideo(file: File) {
         this._file = file;

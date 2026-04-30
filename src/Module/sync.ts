@@ -1,7 +1,7 @@
 import { VideoState } from "../core/VideoState";
 
 class VideoHandler {
-	private state: VideoState;
+	public state: VideoState;
 
 	private label: HTMLDivElement;
 	private fpsDisplay: HTMLParagraphElement;
@@ -22,16 +22,16 @@ class VideoHandler {
 	public onTrimChange: ((which: "start" | "end") => void) | null = null;
     
     get hasVideo(): boolean {return this.state.hasVideo && this.state.hasTimestamps; }
-    get totalFrames(): number { return this.state.frameTimestamps.length; }
+    get totalFrames(): number { return this.state.totalFrames; }
 	get startFrame(): number { return this.state.startFrame ?? 0; }
 	get endFrame(): number { return this.state.endFrame ?? 0; }
 
     get isPaused(): boolean {return this.video.paused;}
-	get currentFrame(): number {return this.frameAtTime(this.video.currentTime);}
+	get currentFrame(): number {return this.state.frameAtTime(this.video.currentTime);}
 
 	get duration(): number {
 		if (!this.hasVideo) return 0;
-		return this.timeAtFrame(this.endFrame) - this.timeAtFrame(this.startFrame);
+		return this.state.timeAtFrame(this.endFrame) - this.state.timeAtFrame(this.startFrame);
 	}
 
 	set startFrame(v: number) { this.state.updateTrim(v, null) }
@@ -88,19 +88,8 @@ class VideoHandler {
 		state.addEventListener("timestampsChange", () =>  { this.updateVideo(); });
 	}
 
-	
-	public frameAtTime(time: number): number {
-		let result = this.state.frameTimestamps.findIndex(t => t >= time)
-		if (result === -1) return this.totalFrames - 1;
-		return result;
-	}
-
-	public timeAtFrame(frame: number): number {
-		return this.state.frameTimestamps[frame];
-	}
-
 	private formatTime(frame: number): string {
-        const seconds = this.timeAtFrame(frame);
+        const seconds = this.state.timeAtFrame(frame);
         const m = Math.floor(seconds / 60);
         const s = Math.floor(seconds % 60);
 
@@ -114,8 +103,8 @@ class VideoHandler {
 	// Playback
 	public togglePlay() {
         if (this.isPaused) {
-			if (this.video.currentTime >= this.timeAtFrame(this.endFrame)) {
-				this.video.currentTime = this.timeAtFrame(this.startFrame);
+			if (this.video.currentTime >= this.state.timeAtFrame(this.endFrame)) {
+				this.video.currentTime = this.state.timeAtFrame(this.startFrame);
 			}
 			this.play();
 		} else {
@@ -148,7 +137,7 @@ class VideoHandler {
 		if (!this.hasVideo) return;
 		frame = Math.max(frame, this.startFrame);
 		frame = Math.min(frame, this.endFrame);
-		this.video.currentTime = this.timeAtFrame(frame);
+		this.video.currentTime = this.state.timeAtFrame(frame);
 		this.movePlayhead();
 	}
 
@@ -261,7 +250,7 @@ class VideoHandler {
                 this.updateTrimDisplay();
 				this.onTrimChange?.("end");
 				this.onTrimChange?.("start");
-				this.seekToFrame(this.frameAtTime(this.video.currentTime));
+				this.seekToFrame(this.state.frameAtTime(this.video.currentTime));
             }
             e.preventDefault();
         };
@@ -279,15 +268,15 @@ class VideoHandler {
     // Trim UI
 	private movePlayhead() {
 		if (!this.hasVideo) return;
-        if (this.video.currentTime > this.timeAtFrame(this.endFrame)) {
+        if (this.video.currentTime > this.state.timeAtFrame(this.endFrame)) {
 			this.video.pause();
-			this.video.currentTime = this.timeAtFrame(this.startFrame);
+			this.video.currentTime = this.state.timeAtFrame(this.startFrame);
 		}
 
 		const pct = this.video.currentTime / this.video.duration * 100;
 		this.playhead.style.setProperty("--pos", `${pct}%`);
 
-		const currentFrame = this.timeAtFrame(this.currentFrame) - this.timeAtFrame(this.startFrame);
+		const currentFrame = this.state.timeAtFrame(this.currentFrame) - this.state.timeAtFrame(this.startFrame);
 		this.currentTimeDisplay.textContent = `Current time: ${currentFrame.toFixed(3)} s`;
 	}
 
@@ -312,7 +301,7 @@ class VideoHandler {
         this.video.src = src;
         this.video.load();
 
-		this.fps = this.totalFrames > 1 ? (this.totalFrames - 1) / this.timeAtFrame(this.totalFrames - 1) : 0;
+		this.fps = this.totalFrames > 1 ? (this.totalFrames - 1) / this.state.timeAtFrame(this.totalFrames - 1) : 0;
 		this.fpsDisplay.textContent = `~${this.fps.toFixed(2)} fps`;
 
         // Seek to start frame once ready
@@ -437,10 +426,10 @@ export class SyncEditor {
 				: [this.videoB, this.videoA];
 
 		controller.seekForward();
-		const targetTime = controller.timeAtFrame(controller.currentFrame) - controller.timeAtFrame(controller.startFrame) + follower.timeAtFrame(follower.startFrame);
-		let targetFrame = follower.frameAtTime(targetTime);
-		const delta1 = Math.abs(targetTime - follower.timeAtFrame(targetFrame));
-		const delta2 = Math.abs(targetTime - follower.timeAtFrame(targetFrame - 1));
+		const targetTime = controller.state.timeAtFrame(controller.currentFrame) - controller.state.timeAtFrame(controller.startFrame) + follower.state.timeAtFrame(follower.startFrame);
+		let targetFrame = follower.state.frameAtTime(targetTime);
+		const delta1 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame));
+		const delta2 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame - 1));
 		if (delta2 < delta1) targetFrame -= 1;
 		follower.seekToFrame(targetFrame);
 	}
@@ -451,10 +440,10 @@ export class SyncEditor {
 				: [this.videoB, this.videoA];
 
 		controller.seekBack();
-		const targetTime = controller.timeAtFrame(controller.currentFrame) - controller.timeAtFrame(controller.startFrame) + follower.timeAtFrame(follower.startFrame);
-		let targetFrame = follower.frameAtTime(targetTime);
-		const delta1 = Math.abs(targetTime - follower.timeAtFrame(targetFrame));
-		const delta2 = Math.abs(targetTime - follower.timeAtFrame(targetFrame - 1));
+		const targetTime = controller.state.timeAtFrame(controller.currentFrame) - controller.state.timeAtFrame(controller.startFrame) + follower.state.timeAtFrame(follower.startFrame);
+		let targetFrame = follower.state.frameAtTime(targetTime);
+		const delta1 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame));
+		const delta2 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame - 1));
 		if (delta2 < delta1) targetFrame -= 1;
 		follower.seekToFrame(targetFrame);
 	}
@@ -480,25 +469,25 @@ export class SyncEditor {
 			follower.toggleDisabled();
 
 			// Mirror time delta from controller onto follower
-			const initialControllerTimeStart = controller.timeAtFrame(controller.startFrame);
-			const initialControllerTimeEnd = controller.timeAtFrame(controller.endFrame);
-			const initialFollowerTimeStart = follower.timeAtFrame(follower.startFrame);
-			const initialFollowerTimeEnd = follower.timeAtFrame(follower.endFrame);
+			const initialControllerTimeStart = controller.state.timeAtFrame(controller.startFrame);
+			const initialControllerTimeEnd = controller.state.timeAtFrame(controller.endFrame);
+			const initialFollowerTimeStart = follower.state.timeAtFrame(follower.startFrame);
+			const initialFollowerTimeEnd = follower.state.timeAtFrame(follower.endFrame);
 			controller.onTrimChange = (which) => {
 				if (!follower.hasVideo) return;
 				if (which === "start") {
-					const targetTime = initialFollowerTimeStart + (controller.timeAtFrame(controller.startFrame) - initialControllerTimeStart);
-					let targetFrame = follower.frameAtTime(targetTime);
-					const delta1 = Math.abs(targetTime - follower.timeAtFrame(targetFrame));
-					const delta2 = Math.abs(targetTime - follower.timeAtFrame(targetFrame - 1));
+					const targetTime = initialFollowerTimeStart + (controller.state.timeAtFrame(controller.startFrame) - initialControllerTimeStart);
+					let targetFrame = follower.state.frameAtTime(targetTime);
+					const delta1 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame));
+					const delta2 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame - 1));
 					if (delta2 < delta1) targetFrame -= 1;
 					follower.startFrame = Math.max(0, Math.min(follower.endFrame - 1, targetFrame));
 					follower.seekToFrame(follower.startFrame);
 				} else {
-					const targetTime = initialFollowerTimeEnd + (controller.timeAtFrame(controller.endFrame) - initialControllerTimeEnd);
-					let targetFrame = follower.frameAtTime(targetTime);
-					const delta1 = Math.abs(targetTime - follower.timeAtFrame(targetFrame));
-					const delta2 = Math.abs(targetTime - follower.timeAtFrame(targetFrame - 1));
+					const targetTime = initialFollowerTimeEnd + (controller.state.timeAtFrame(controller.endFrame) - initialControllerTimeEnd);
+					let targetFrame = follower.state.frameAtTime(targetTime);
+					const delta1 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame));
+					const delta2 = Math.abs(targetTime - follower.state.timeAtFrame(targetFrame - 1));
 					if (delta2 < delta1) targetFrame -= 1;
 					follower.endFrame = Math.min(follower.totalFrames - 1, Math.max(follower.startFrame + 1, targetFrame));
 					follower.seekToFrame(follower.endFrame);
@@ -523,10 +512,10 @@ export class SyncEditor {
 	public matchDuration() {
 		if (!this.videoA.hasVideo || !this.videoB.hasVideo) return;
 
-		const timestartA = this.videoA.timeAtFrame(this.videoA.startFrame);
-		const timeendA = this.videoA.timeAtFrame(this.videoA.endFrame);
-		const timestartB = this.videoB.timeAtFrame(this.videoB.startFrame);
-		const timeendB = this.videoB.timeAtFrame(this.videoB.endFrame);
+		const timestartA = this.videoA.state.timeAtFrame(this.videoA.startFrame);
+		const timeendA = this.videoA.state.timeAtFrame(this.videoA.endFrame);
+		const timestartB = this.videoB.state.timeAtFrame(this.videoB.startFrame);
+		const timeendB = this.videoB.state.timeAtFrame(this.videoB.endFrame);
 
 		const DurationA = timeendA - timestartA;
 		const DurationB = timeendB - timestartB;
@@ -534,12 +523,12 @@ export class SyncEditor {
 		if (DurationA === DurationB) return;
 		if (DurationA < DurationB) {
 			const targetTime = timestartB + DurationA;
-			const targetFrame = this.videoB.frameAtTime(targetTime);
+			const targetFrame = this.videoB.state.frameAtTime(targetTime);
 			this.videoB.endFrame = targetFrame;
 			this.videoB.updateTrimDisplay();
 		} else {
 			const targetTime = timestartA + DurationB;
-			const targetFrame = this.videoA.frameAtTime(targetTime);
+			const targetFrame = this.videoA.state.frameAtTime(targetTime);
 			this.videoA.endFrame = targetFrame;
 			this.videoA.updateTrimDisplay();
 		}
@@ -549,8 +538,8 @@ export class SyncEditor {
 
 	private updateCard() {
 		if (this.videoA.hasVideo) {
-			const startATime = this.videoA.timeAtFrame(this.videoA.startFrame);
-			const endATime = this.videoA.timeAtFrame(this.videoA.endFrame);
+			const startATime = this.videoA.state.timeAtFrame(this.videoA.startFrame);
+			const endATime = this.videoA.state.timeAtFrame(this.videoA.endFrame);
 			this.startA.textContent = startATime.toFixed(3);
 			this.endA.textContent = endATime.toFixed(3);
 			this.durationA.textContent = (endATime - startATime).toFixed(3);
@@ -561,8 +550,8 @@ export class SyncEditor {
 		}
 
 		if (this.videoB.hasVideo) {
-			const startBTime = this.videoB.timeAtFrame(this.videoB.startFrame);
-			const endBTime = this.videoB.timeAtFrame(this.videoB.endFrame);
+			const startBTime = this.videoB.state.timeAtFrame(this.videoB.startFrame);
+			const endBTime = this.videoB.state.timeAtFrame(this.videoB.endFrame);
 			this.startB.textContent = startBTime.toFixed(3);
 			this.endB.textContent = endBTime.toFixed(3);
 			this.durationB.textContent = (endBTime - startBTime).toFixed(3);
