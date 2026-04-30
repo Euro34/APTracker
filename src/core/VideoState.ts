@@ -47,7 +47,6 @@ export class VideoState extends EventTarget {
     public updateVideo(file: File) {
         this._file = file;
         this.dispatchEvent(new Event("onUpload"));
-        // console.log("Upload\n" + this.toString());
     }
 
     public updateTimestamps(timestamps: number[]) {
@@ -57,11 +56,11 @@ export class VideoState extends EventTarget {
             this.endFrame = timestamps.length > 0 ? timestamps.length - 1 : 0;
             this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
             this.targetCurrentTime = Math.min(Math.max(this.targetCurrentTime, this.startTime), this.endTime);
+            this._targetMarks = Array(this.totalFrames-1).fill(null);
         } else {
             this._frameTimestamps = timestamps;
         }
         this.dispatchEvent(new Event("timestampsChange"));
-        // console.log("Timestamps\n" + this.toString());
     }
 
     public updateTrim(startFrame: number | null = null, endFrame: number | null = null) {
@@ -70,7 +69,6 @@ export class VideoState extends EventTarget {
         this.refCurrentTime = Math.min(Math.max(this.refCurrentTime, this.startTime), this.endTime);
         this.targetCurrentTime = Math.min(Math.max(this.targetCurrentTime, this.startTime), this.endTime);
         this.dispatchEvent(new Event("trimChange"));
-        // console.log("Trim\n" + this.toString());
     }
 
     public updateReferenceMarks(index: number, point: Point2D | null) {
@@ -78,8 +76,8 @@ export class VideoState extends EventTarget {
         this.dispatchEvent(new Event("referenceChange"));
     }
 
-    public updateTargetMarks(index: number, point: Point2D | null) {
-        this._targetMarks[index] = point;
+    public updateTargetMarks(frame: number, point: Point2D | null) {
+        this._targetMarks[frame] = point;
         this.dispatchEvent(new Event("targetChange"));
     }
 
@@ -87,13 +85,12 @@ export class VideoState extends EventTarget {
         this._file = new File([], '');
         this._frameTimestamps = [];
         this._referenceMarks = Array(8).fill(null);
-        this._targetMarks = Array(8).fill(null);
+        this._targetMarks = [];
         this._startFrame = NaN;
         this._endFrame = NaN;
         this._refCurrentTime = NaN;
         this._targetCurrentTime = NaN;
         this.dispatchEvent(new Event("onReset"));
-        // console.log("Reset state\n" + this.toString());
     }
 
     public snapshot(): {

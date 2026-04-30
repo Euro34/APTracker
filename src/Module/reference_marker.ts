@@ -31,17 +31,17 @@ class VideoManager {
 	private playBar = this.viewPort.querySelector(".play-bar") as HTMLDivElement;
 	private playhead = this.viewPort.querySelector(".playhead") as HTMLDivElement;
 	private timeDisplay = this.viewPort.querySelector(".time") as HTMLDivElement;
-
+	
 	private deleteBtn = this.viewPort.querySelector(".delete") as HTMLButtonElement;
+
+	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay, this.boxOverlay]);
+	private readonly dotRadius = 3.5;
 
 	private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
 
 	private state: VideoState;
 	private selectedCorner = 0;
-
-	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay, this.boxOverlay]);
-	private readonly dotRadius = 3.5;
 
 	constructor(state: VideoState) {
 		this.state = state;
@@ -193,7 +193,7 @@ class VideoManager {
 			const cx = mark.x * W;
 			const cy = mark.y * H;
 			const { r, g, b } = cornerColor(i);
-			const radius = (i === this.selectedCorner ? this.dotRadius * 1.5 : this.dotRadius) * S; // scale radius too
+			const radius = (i === this.selectedCorner ? this.dotRadius * 1.5 : this.dotRadius) * S;
 
 			ctx.beginPath();
 			ctx.arc(cx, cy, radius, 0, Math.PI * 2);

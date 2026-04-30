@@ -51,6 +51,24 @@
 	gap: 10px;
 }
 
+.TargetMarker .sidebar button {
+	width: 100%;
+	padding: 10px 0;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	background-color: var(--background3-color);
+	transition: background-color 0.15s, color 0.15s;
+}
+
+.TargetMarker .sidebar button:hover {
+	background-color: var(--border-color);
+}
+
+.TargetMarker .sidebar button.active {
+	border-color: var(--accent1-color);
+	background-color: var(--border-color);
+}
+
 /* Video Selector */
 .TargetMarker .vid-selector {
 	display: grid;
@@ -196,9 +214,19 @@
 	transform: translate(-50%, -50%);
 }
 
-.TargetMarker .time {
+.TargetMarker .time-frame {
 	width: 120px;
+}
+
+.TargetMarker .time {
+	font-size: var(--text-xxs);
 	text-align: center;
+}
+
+.TargetMarker .frame {
+	font-size: var(--text-xxs);
+	text-align: center;
+	color: var(--text2-color);
 }
 
 .TargetMarker button.delete {

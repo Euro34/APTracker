@@ -3,6 +3,8 @@ import { VideoState } from "../core/VideoState";
 import { PanZoom } from "../core/PanZoom";
 
 class VideoManager {
+	private autoForwardBtn = document.getElementById("auto-forward") as HTMLButtonElement;
+
     private viewPort = document.getElementById("target-viewport") as HTMLDivElement;
 	private container = document.getElementById("target-video-container") as HTMLDivElement;
 	private video = document.getElementById("target-video") as HTMLVideoElement;
@@ -12,32 +14,44 @@ class VideoManager {
 	private playBar = this.viewPort.querySelector(".play-bar") as HTMLDivElement;
 	private playhead = this.viewPort.querySelector(".playhead") as HTMLDivElement;
 	private timeDisplay = this.viewPort.querySelector(".time") as HTMLDivElement;
+	private frameDisplay = this.viewPort.querySelector(".frame") as HTMLDivElement;
 
     private deleteBtn = this.viewPort.querySelector(".delete") as HTMLButtonElement;
+	
+    private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay]);
+	private readonly dotRadius = 3.5;
 
     private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
     
+	private autoForward: boolean = false;
+
     private state: VideoState;
     private selectedFrame = 0;
 
-    private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay]);
-	private readonly dotRadius = 3.5;
+	get currentFrame(): number {return this.state.frameAtTime(this.video.currentTime);}
 
     constructor(state: VideoState) {
         this.state = state;
-
-
+		
+		this.viewPort.querySelector(".back")!.addEventListener("click", () => this.seekBack());
         this.playBtn.addEventListener('click', () => this.togglePlay());
+		this.viewPort.querySelector(".forward")!.addEventListener("click", () => this.seekForward());
 		this.deleteBtn.addEventListener('click', () => this.deleteMark(this.selectedFrame));
-
+		
         this.video.addEventListener('timeupdate', () => this.updatePlayhead());
+		
+		this.autoForwardBtn.addEventListener("click", () => {
+			this.autoForward = !this.autoForward
+			this.autoForwardBtn.classList.toggle("active", this.autoForward);
+		})
 
         this.bindScrubEvents();
 
         this.panZoom.onLeftClick = (pos) => {
 			if (!this.state.hasVideo) return;
 			this.state.updateTargetMarks(this.selectedFrame, pos);
+			if (this.autoForward) this.seekForward();
 			this.drawMarks();
 		};
 		this.panZoom.onMiddleClick = (pos) => {
@@ -97,19 +111,34 @@ class VideoManager {
 		this.updatePlayBtn(false);
 	}
 
+	private seekBack() {this.seekToFrame(this.currentFrame - 1);}
+	private seekForward() {this.seekToFrame(this.currentFrame + 1);}
+
+	public seekToFrame(frame: number) {
+		if (!this.state.hasVideo) return;
+		frame = Math.max(frame, this.state.startFrame);
+		frame = Math.min(frame, this.state.endFrame);
+		this.video.currentTime = this.state.timeAtFrame(frame);
+		this.updatePlayhead();
+	}
+
     private updatePlayhead() {
         this.state.targetCurrentTime = this.video.currentTime;
 		const currentTime = this.video.currentTime - this.state.startTime;
 		const duration = this.state.duration;
+		this.updateSelectedFrame(this.currentFrame);
 		if (duration > 0) {
 			const progress = currentTime / duration;
 			this.playhead.style.left = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
 			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.state.duration)}`;
+			this.frameDisplay.textContent = `${this.currentFrame - this.state.startFrame + 1} / ${this.state.totalFrames - this.state.startFrame}`;
 		} else {
 			this.playhead.style.left = '0%';
-			this.timeDisplay.textContent = `0.00 / 0.00`;
+			this.timeDisplay.textContent = '0.00 / 0.00';
+			this.frameDisplay.textContent = '0/0'
 		}
-		if (currentTime >= duration) {
+		if (this.isScrubbing) return;
+		if (currentTime > duration) {
 			this.pause();
 			this.video.currentTime = this.state.startTime;
 		}
@@ -157,7 +186,32 @@ class VideoManager {
     private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
 
     private drawMarks() {
+		const ctx = this.markOverlay.getContext('2d')!;
+		const W = this.markOverlay.width;
+		const H = this.markOverlay.height;
+		const S = this.panZoom.OVERLAY_SCALE;
+		ctx.clearRect(0, 0, W, H);
 
+		for (let i = 0; i < this.state.totalFrames; i++) {
+			const mark = this.state.targetMarks[i];
+			if (!mark) continue;
+
+			const cx = mark.x * W;
+			const cy = mark.y * H;
+			const radius = (i === this.selectedFrame ? this.dotRadius * 1.5 : this.dotRadius) * S;
+			const lightness = 1 - Math.min(Math.abs(this.selectedFrame - i), 5) * 0.15;
+
+			ctx.beginPath();
+			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+			ctx.fillStyle = `rgba(250,250,250,${lightness})`;
+			ctx.fill();
+
+			ctx.beginPath();
+			ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+			ctx.strokeStyle = `rgba(0,0,0,${lightness})`;
+			ctx.lineWidth = 1.5 * S;
+			ctx.stroke();
+		}
     }
 
     private deleteMarkAtPos(pos: Point2D) {
