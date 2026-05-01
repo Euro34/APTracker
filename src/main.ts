@@ -59,6 +59,7 @@ class APTracker {
             state.addEventListener("timestampsChange", () => this.updateSyncStatus());
             state.addEventListener("trimChange", () => this.updateSyncStatus());
             state.addEventListener("referenceChange", () => this.updateRefMarkerStatus());
+            state.addEventListener("targetChange", () => this.updateTargetMarkerStatus());
             state.addEventListener("onReset", () => this.updateAllStatus());
         });
     }
@@ -67,6 +68,7 @@ class APTracker {
         this.updateUploadStatus();
         this.updateSyncStatus();
         this.updateRefMarkerStatus();
+        this.updateTargetMarkerStatus()
     }
 
     private output() {
@@ -132,6 +134,26 @@ class APTracker {
             updateStatus("RefMarks", "inprogress");
         } else {
             updateStatus("RefMarks", "");
+        }
+    }
+
+    private updateTargetMarkerStatus() {
+        let markedFound = [false, false];
+        this.states.forEach((state, index) => {
+            for (const mark of state.targetMarks) {
+                if (mark !== null) {
+                    markedFound[index] = true;
+                    break;
+                }
+            }
+        });
+
+        if (markedFound[0] && markedFound[1]) {
+            updateStatus("TargetMarks", "done");
+        } else if (markedFound[0] || markedFound[1]) {
+            updateStatus("TargetMarks", "inprogress");
+        } else {
+            updateStatus("TargetMarks", "");
         }
     }
 
