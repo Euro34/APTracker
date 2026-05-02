@@ -44,7 +44,6 @@ class VideoManager {
 	private selectedCorner = 0;
 
 	private noGuide: boolean = false;
-	private callCountPS: number = 0;
 
 	constructor(state: VideoState) {
 		this.state = state;
@@ -68,9 +67,6 @@ class VideoManager {
 		this.panZoom.onMouseMove = (pos) => {
 			if (!this.state.hasVideo) return;
 			this.drawGuideLines(pos);
-			this.callCountPS++;
-			console.log(this.callCountPS);
-			setTimeout(() => this.callCountPS--, 1000);
 		}
 	}
 	
