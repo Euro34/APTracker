@@ -160,34 +160,39 @@ export class PanZoom {
     }
 
 	private applyTransform(): void {
-        const vpW = this.viewPort.clientWidth;
-        const vpH = this.viewPort.clientHeight;
+		const vpW = this.viewPort.clientWidth;
+		const vpH = this.viewPort.clientHeight;
 
-        if (vpW === 0 || vpH === 0) {
-            this.needsTransform = true;
-            return;
-        }
-        
-        const vw = this.content.videoWidth || vpW;
-        const vh = this.content.videoHeight || vpH;
-        const scale = Math.min(vpW / vw, vpH / vh);
-        const fitW = vw * scale * this.zoom;
-        const fitH = vh * scale * this.zoom;
-        
-        this.container.style.width = `${fitW}px`;
-        this.container.style.height = `${fitH}px`;
-        this.content.style.width = `${fitW}px`;
-        this.content.style.height = `${fitH}px`;
+		if (vpW === 0 || vpH === 0) {
+			this.needsTransform = true;
+			return;
+		}
 
-        for (const canvas of this.overlay) {
-            canvas.style.width = `${fitW}px`;
-            canvas.style.height = `${fitH}px`;
-        }
+		const vw = this.content.videoWidth || vpW;
+		const vh = this.content.videoHeight || vpH;
+		const fitScale = Math.min(vpW / vw, vpH / vh);
 
-        this.container.style.position = 'absolute';
-        this.container.style.left = '50%';
-        this.container.style.top = '50%';
-        this.container.style.transform =
-            `translate(calc(-50% + ${this.panX}px), calc(-50% + ${this.panY}px))`;
-    }
+		const SIZE_ZOOM_CAP = 10;
+		const sizeZoom = Math.min(this.zoom, SIZE_ZOOM_CAP);
+		const scaleZoom = this.zoom / sizeZoom; // 1.0 when zoom <= 10, grows beyond
+
+		const fitW = vw * fitScale * sizeZoom;
+		const fitH = vh * fitScale * sizeZoom;
+
+		this.container.style.width = `${fitW}px`;
+		this.container.style.height = `${fitH}px`;
+		this.content.style.width = `${fitW}px`;
+		this.content.style.height = `${fitH}px`;
+
+		for (const canvas of this.overlay) {
+			canvas.style.width = `${fitW}px`;
+			canvas.style.height = `${fitH}px`;
+		}
+
+		this.container.style.position = 'absolute';
+		this.container.style.left = '50%';
+		this.container.style.top = '50%';
+		this.container.style.transform =
+			`translate(calc(-50% + ${this.panX}px), calc(-50% + ${this.panY}px)) scale(${scaleZoom})`;
+	}
 }

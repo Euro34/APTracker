@@ -109,6 +109,7 @@ class VideoManager {
 	private pause() {
 		this.video.pause();
 		this.updatePlayBtn(false);
+		this.updatePlayhead();
 	}
 
 	private seekBack() { this.seekToFrame(this.currentFrame - 1); }
@@ -119,6 +120,7 @@ class VideoManager {
 		frame = Math.max(frame, this.state.startFrame);
 		frame = Math.min(frame, this.state.endFrame);
 		this.video.currentTime = this.state.timeAtFrame(frame);
+		this.updatePlayhead();
 	}
 
     private updatePlayhead() {
@@ -138,7 +140,8 @@ class VideoManager {
 		}
 		if (this.isScrubbing) return;
 		if (currentTime > duration) {
-			this.pause();
+			this.video.pause();
+			this.updatePlayBtn(false);
 			this.video.currentTime = this.state.startTime;
 		}
 		if (currentTime < 0) {

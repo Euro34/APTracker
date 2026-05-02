@@ -43,6 +43,7 @@ class VideoManager {
 	private state: VideoState;
 	private selectedCorner = 0;
 
+	private guideCtx = this.guideOverlay.getContext('2d')!;
 	private noGuide: boolean = false;
 
 	constructor(state: VideoState) {
@@ -121,6 +122,7 @@ class VideoManager {
 	private pause() {
 		this.video.pause();
 		this.updatePlayBtn(false);
+		this.updatePlayhead();
 	}
 
 	private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
@@ -366,7 +368,7 @@ class VideoManager {
 	}
 
 	private drawGuideLines(pos: Point2D | null) {
-		const ctx = this.guideOverlay.getContext('2d')!;
+		const ctx = this.guideCtx;
 		const W = this.guideOverlay.width;
 		const H = this.guideOverlay.height;
 		const S = this.panZoom.OVERLAY_SCALE;
@@ -381,37 +383,25 @@ class VideoManager {
 		}
 
 		ctx.clearRect(0, 0, W, H);
+		ctx.lineWidth = S;
 		
 		// x-axis
-		const pointx = this.state.referenceMarks[this.selectedCorner ^ 1];
-		if (pointx) {
-			ctx.beginPath();
-			ctx.moveTo(pos.x * W, pos.y * H);
-			ctx.lineTo(pointx.x * W, pointx.y * H);
-			ctx.strokeStyle = 'rgba(255,0,0,0.3)';
-			ctx.lineWidth = 1 * S;
-			ctx.stroke();
-		}
+		const axes: [number, string][] = [
+			[1, 'rgba(255,0,0,0.3)'],
+			[2, 'rgba(0,255,0,0.3)'],
+			[4, 'rgba(0,0,255,0.3)'],
+		];
 
-		// y-axis
-		const pointy = this.state.referenceMarks[this.selectedCorner ^ 2];
-		if (pointy) {
-			ctx.beginPath();
-			ctx.moveTo(pos.x * W, pos.y * H);
-			ctx.lineTo(pointy.x * W, pointy.y * H);
-			ctx.strokeStyle = 'rgba(0,255,0,0.3)';
-			ctx.lineWidth = 1 * S;
-			ctx.stroke();
-		}
+		const px = pos.x * W;
+		const py = pos.y * H;
 
-		// z-axis
-		const pointz = this.state.referenceMarks[this.selectedCorner ^ 4];
-		if (pointz) {
+		for (const [xorBit, color] of axes) {
+			const point = this.state.referenceMarks[this.selectedCorner ^ xorBit];
+			if (point === null) continue;
 			ctx.beginPath();
-			ctx.moveTo(pos.x * W, pos.y * H);
-			ctx.lineTo(pointz.x * W, pointz.y * H);
-			ctx.strokeStyle = 'rgba(0,0,255,0.3)';
-			ctx.lineWidth = 1 * S;
+			ctx.moveTo(px, py);
+			ctx.lineTo(point.x * W, point.y * H);
+			ctx.strokeStyle = color;
 			ctx.stroke();
 		}
 	}
