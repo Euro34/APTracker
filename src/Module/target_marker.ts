@@ -58,10 +58,6 @@ class VideoManager {
 			if (!this.state.hasVideo) return;
 			this.deleteMarkAtPos(pos);
 		};
-		this.panZoom.onRedraw = () => {
-			if (!this.state.hasVideo) return;
-			this.drawMarks();
-		};
     }
 
     public updateVideoState(videoState: VideoState) {
@@ -123,7 +119,6 @@ class VideoManager {
 		frame = Math.max(frame, this.state.startFrame);
 		frame = Math.min(frame, this.state.endFrame);
 		this.video.currentTime = this.state.timeAtFrame(frame);
-		this.updatePlayhead();
 	}
 
     private updatePlayhead() {

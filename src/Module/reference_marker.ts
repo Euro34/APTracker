@@ -43,6 +43,9 @@ class VideoManager {
 	private state: VideoState;
 	private selectedCorner = 0;
 
+	private noGuide: boolean = false;
+	private callCountPS: number = 0;
+
 	constructor(state: VideoState) {
 		this.state = state;
 
@@ -62,13 +65,12 @@ class VideoManager {
 			if (!this.state.hasVideo) return;
 			this.deleteMarkAtPos(pos);
 		};
-		this.panZoom.onRedraw = () => {
-			if (!this.state.hasVideo) return;
-			this.drawMarks();
-		};
 		this.panZoom.onMouseMove = (pos) => {
 			if (!this.state.hasVideo) return;
 			this.drawGuideLines(pos);
+			this.callCountPS++;
+			console.log(this.callCountPS);
+			setTimeout(() => this.callCountPS--, 1000);
 		}
 	}
 	
@@ -373,10 +375,17 @@ class VideoManager {
 		const H = this.guideOverlay.height;
 		const S = this.panZoom.OVERLAY_SCALE;
 		
-		ctx.clearRect(0, 0, W, H);
-		if (!pos) return;
-		if (this.state.referenceMarks[this.selectedCorner] !== null) return;
+		if (!pos || this.state.referenceMarks[this.selectedCorner] !== null) {
+			if (this.noGuide) return;
+			this.noGuide = true;
+			ctx.clearRect(0, 0, W, H);
+			return;
+		} else {
+			this.noGuide = false;
+		}
 
+		ctx.clearRect(0, 0, W, H);
+		
 		// x-axis
 		const pointx = this.state.referenceMarks[this.selectedCorner ^ 1];
 		if (pointx) {

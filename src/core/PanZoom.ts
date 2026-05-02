@@ -24,7 +24,6 @@ export class PanZoom {
 	public onLeftClick?: (pos: { x: number; y: number }) => void;
     public onMiddleClick?: (pos: { x: number; y: number }) => void;
 	public onRightClick?: (pos: { x: number; y: number }) => void;
-    public onRedraw?: () => void;
     public onMouseMove?: (pos: { x: number; y: number } | null) => void;
 
 	constructor(viewPort: HTMLElement, container: HTMLElement, content: HTMLVideoElement, overlays: HTMLCanvasElement[]) {
@@ -100,7 +99,6 @@ export class PanZoom {
 
 			this.clampPan();
 			this.applyTransform();
-            this.onRedraw?.();
 		}, { passive: false });
 
 		this.viewPort.addEventListener("mousedown", (e) => {
@@ -119,7 +117,6 @@ export class PanZoom {
 			this.panY = this.panStartOffsetY + (e.clientY - this.panStartY);
 			this.clampPan();
 			this.applyTransform();
-            this.onRedraw?.();
 		});
 
 		window.addEventListener("mouseup", (e) => {
