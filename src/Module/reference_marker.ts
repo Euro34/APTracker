@@ -140,7 +140,8 @@ class VideoManager {
 			this.timeDisplay.textContent = `0.00 / 0.00`;
 		}
 		if (currentTime >= duration) {
-			this.pause();
+			this.video.pause();
+			this.updatePlayBtn(false);
 			this.video.currentTime = this.state.startTime;
 		}
 		if (currentTime < 0) {
