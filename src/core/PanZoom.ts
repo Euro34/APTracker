@@ -174,7 +174,7 @@ export class PanZoom {
 
 		const SIZE_ZOOM_CAP = 10;
 		const sizeZoom = Math.min(this.zoom, SIZE_ZOOM_CAP);
-		const scaleZoom = this.zoom / sizeZoom; // 1.0 when zoom <= 10, grows beyond
+		const scaleZoom = this.zoom / sizeZoom;
 
 		const fitW = vw * fitScale * sizeZoom;
 		const fitH = vh * fitScale * sizeZoom;

@@ -70,6 +70,10 @@
 }
 
 /* Video Selector */
+.auto-track canvas {
+	display: block;
+}
+
 .TargetMarker .vid-selector {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
