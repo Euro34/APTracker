@@ -513,11 +513,11 @@
         </div>
         <div class="content">
             <div class="sidebar">
-                <div class="auto-track">
-                    <canvas></canvas>
-                    Auto Tracking
+                <div class="autoTrack">
+                     <button id="auto-Track">Auto Track</button>
+                     <button id="continuously-Track">Continuously Track</button>
                 </div>
-                <button id="auto-forward" title="Forwading by 1 frame after marked">Auto Forwarding</button>
+                <button class="active" id="auto-forward" title="Forwading by 1 frame after marked">Auto Forwarding</button>
                 <div class="vid-selector" id="vid-selector">
                     <button class="vid-btn active" id="vid-btn-a" data-vid="a">Camera A</button>
                     <button class="vid-btn" id="vid-btn-b" data-vid="b">Camera B</button>
@@ -549,5 +549,6 @@
 
     <footer>
         <script type="module" src="src/importer.ts"></script>
+        <script async src="/opencv.js" type="text/javascript"></script>
     </footer>
 </html>

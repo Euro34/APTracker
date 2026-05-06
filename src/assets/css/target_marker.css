@@ -37,6 +37,7 @@
     height: 100%;
 }
 
+/* Sidebar */
 .TargetMarker .sidebar {
 	display: flex;
 	overflow-y: auto;
@@ -69,9 +70,10 @@
 	background-color: var(--border-color);
 }
 
-/* Video Selector */
-.auto-track canvas {
-	display: block;
+.autoTrack {
+	display: flex;
+	width: 100%;
+	gap: 10px;
 }
 
 .TargetMarker .vid-selector {
@@ -228,9 +230,9 @@
 }
 
 .TargetMarker .frame {
+	color: var(--text2-color);
 	font-size: var(--text-xxs);
 	text-align: center;
-	color: var(--text2-color);
 }
 
 .TargetMarker button.delete {

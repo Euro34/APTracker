@@ -1,8 +1,11 @@
 import { Point2D } from "../core/Types";
 import { VideoState } from "../core/VideoState";
 import { PanZoom } from "../core/PanZoom";
+import { captureGrayFrame, trackPoint } from "../core/AutoTrack";
 
 class VideoManager {
+	private autoTrack = document.getElementById("auto-Track") as HTMLButtonElement;
+	private continuousTrack = document.getElementById("continuously-Track") as HTMLButtonElement;
 	private autoForwardBtn = document.getElementById("auto-forward") as HTMLButtonElement;
 
     private viewPort = document.getElementById("target-viewport") as HTMLDivElement;
@@ -24,7 +27,8 @@ class VideoManager {
     private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
     
-	private autoForward: boolean = false;
+	private prevFrame: any;
+	private autoForward: boolean = true;
 
     private state: VideoState;
     private selectedFrame = 0;
@@ -46,13 +50,26 @@ class VideoManager {
 			this.autoForwardBtn.classList.toggle("active", this.autoForward);
 		})
 
+		this.autoTrack.addEventListener("click", () => {
+			this.pause();
+			this.trackThisFrame();
+			if (this.autoForward) this.seekForward();
+		})
+
+		this.continuousTrack.addEventListener("click", () => {
+			this.pause();
+			while (this.trackThisFrame()) {
+				this.seekForward();
+			}
+		})
+
         this.bindScrubEvents();
 
         this.panZoom.onLeftClick = (pos) => {
 			if (!this.state.hasVideo) return;
 			this.state.updateTargetMarks(this.selectedFrame, pos);
-			if (this.autoForward) this.seekForward();
 			this.drawMarks();
+			if (this.autoForward) this.seekForward();
 		};
 		this.panZoom.onMiddleClick = (pos) => {
 			if (!this.state.hasVideo) return;
@@ -238,6 +255,25 @@ class VideoManager {
     private deleteMark(index: number) {
 		this.state.updateTargetMarks(index, null);
 		this.drawMarks();
+	}
+
+	private trackThisFrame(): boolean {
+		const prevMark = this.state.targetMarks[this.currentFrame];
+		if (prevMark === null) {
+			alert("Please mark the previous frame"); 
+			return false;
+		}
+		const currFrame = captureGrayFrame(this.video);
+		const predicted = trackPoint(this.prevFrame, currFrame, prevMark);
+		currFrame.delete();
+		if (!predicted) {
+			alert("Track Failed");
+			return false;
+		} else {
+			this.state.updateTargetMarks(this.currentFrame, predicted);
+			this.drawMarks();
+			return true;
+		}
 	}
 }
 
