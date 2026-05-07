@@ -91,7 +91,7 @@ class VideoManager {
 		this.pause();
 		this.video.load();
 		
-		this.video.addEventListener('loadeddata', () => {
+		this.video.addEventListener('loadedmetadata', () => {
 			this.video.currentTime = this.state.targetCurrentTime;
 			this.updatePlayhead();
 			this.panZoom.resetView();
@@ -295,7 +295,7 @@ export class TargetMarker {
 			state.addEventListener("timestampsChange", () => this.videoManager.updateCurrentTime());
 			state.addEventListener("trimChange", () => this.videoManager.updateCurrentTime());
 			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
-			state.addEventListener("onImport", () => this.updateCard());
+			state.addEventListener("onImport", () => { this.selectVideo('a'); this.updateCard(); });
 		});
 
 
