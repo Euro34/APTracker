@@ -266,7 +266,7 @@ class APTracker {
                 alert("Failed to import: file is corrupted or not a valid APTracker export.");
                 console.error(err);
             }
-        });
+        }, { once: true });
         input.click();
     }
 

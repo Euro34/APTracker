@@ -24,6 +24,7 @@ class VideoManager {
     private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay]);
 	private readonly dotRadius = 3.5;
 
+	private dontUpdatePlayhead = false;
     private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
     
@@ -42,8 +43,8 @@ class VideoManager {
         this.playBtn.addEventListener('click', () => this.togglePlay());
 		this.viewPort.querySelector(".forward")!.addEventListener("click", () => this.seekForward());
 		this.deleteBtn.addEventListener('click', () => this.deleteMark(this.selectedFrame));
-		
-        this.video.addEventListener('timeupdate', () => this.updatePlayhead());
+
+		this.video.addEventListener('timeupdate', () => this.updatePlayhead());
 		
 		this.autoForwardBtn.addEventListener("click", () => {
 			this.autoForward = !this.autoForward;
@@ -78,6 +79,7 @@ class VideoManager {
     }
 
     public updateVideoState(videoState: VideoState) {
+		this.dontUpdatePlayhead = true;
 		this.state = videoState;
 		const url = URL.createObjectURL(videoState.file);
 
@@ -91,8 +93,9 @@ class VideoManager {
 		this.pause();
 		this.video.load();
 		
-		this.video.addEventListener('loadedmetadata', () => {
+		this.video.addEventListener('loadeddata', () => {
 			this.video.currentTime = this.state.targetCurrentTime;
+			this.dontUpdatePlayhead = false;
 			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
@@ -137,10 +140,10 @@ class VideoManager {
 		frame = Math.max(frame, this.state.startFrame);
 		frame = Math.min(frame, this.state.endFrame);
 		this.video.currentTime = this.state.timeAtFrame(frame);
-		this.updatePlayhead();
 	}
 
     private updatePlayhead() {
+		if (this.dontUpdatePlayhead) return;
         this.state.targetCurrentTime = this.video.currentTime;
 		const currentTime = this.video.currentTime - this.state.startTime;
 		const duration = this.state.duration;
@@ -295,7 +298,7 @@ export class TargetMarker {
 			state.addEventListener("timestampsChange", () => this.videoManager.updateCurrentTime());
 			state.addEventListener("trimChange", () => this.videoManager.updateCurrentTime());
 			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
-			state.addEventListener("onImport", () => { this.selectVideo('a'); this.updateCard(); });
+			state.addEventListener("onImport", () => this.updateCard());
 		});
 
 

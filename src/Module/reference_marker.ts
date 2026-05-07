@@ -37,6 +37,7 @@ class VideoManager {
 	private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay, this.guideOverlay, this.boxOverlay]);
 	private readonly dotRadius = 3.5;
 
+	private dontUpdatePlayhead = false;
 	private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
 
@@ -72,6 +73,7 @@ class VideoManager {
 	}
 	
 	public updateVideoState(videoState: VideoState) {
+		this.dontUpdatePlayhead = true;
 		this.state = videoState;
 		const url = URL.createObjectURL(videoState.file);
 		
@@ -87,6 +89,7 @@ class VideoManager {
 		
 		this.video.addEventListener('loadeddata', () => {
 			this.video.currentTime = this.state.refCurrentTime;
+			this.dontUpdatePlayhead = false;
 			this.updatePlayhead();
 			this.panZoom.resetView();
 			this.panZoom.fitCanvasToVideo();
@@ -128,6 +131,7 @@ class VideoManager {
 	private updatePlayBtn(playing: boolean) {this.playBtn.textContent = playing ? "⏸\uFE0E" : "▶\uFE0E";}
 
 	private updatePlayhead() {
+		if (this.dontUpdatePlayhead) return;
 		this.state.refCurrentTime = this.video.currentTime;
 		const currentTime = this.video.currentTime - this.state.startTime;
 		const duration = this.state.duration;
