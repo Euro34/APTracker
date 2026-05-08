@@ -47,6 +47,7 @@ export function trackPoint(
 	const nextPts = new cv.Mat();
 	const status = new cv.Mat();
 	const err = new cv.Mat();
+	const maxError = 20;
 
 	// opencv.js only exposes the 6-argument overload
 	cv.calcOpticalFlowPyrLK(
@@ -58,16 +59,17 @@ export function trackPoint(
 		err
 	);
 
-	const tracked = status.data[0] === 1;
+	const isTracked = status.data[0] === 1;
+	const errorValue = err.data32F[0];
 
 	let result: Point2D | null = null;
 
-	if (tracked) {
-		result = new Point2D(
-			nextPts.data32F[0] / w,
-			nextPts.data32F[1] / h
-		);
-	}
+	if (isTracked && errorValue <= maxError) {
+        result = new Point2D(
+            nextPts.data32F[0] / w,
+            nextPts.data32F[1] / h
+        );
+    }
 
 	prevPts.delete();
 	nextPts.delete();

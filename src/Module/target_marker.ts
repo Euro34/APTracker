@@ -63,16 +63,36 @@ class VideoManager {
 		this.continuousTrack.addEventListener("click", async () => {
 			if (this.isContinuoslyTrack) {
 				this.isContinuoslyTrack = false;
-			} else {
-				this.pause();
-				this.isContinuoslyTrack = true;
-				let success = await this.trackThisFrame();
-				while (success && this.isContinuoslyTrack) {
-					this.seekForward();
-					success = await this.trackThisFrame();
-				}
+				return;
 			}
-		})
+
+			this.pause();
+			this.isContinuoslyTrack = true;
+			this.continuousTrack.classList.add("active");
+
+			while (this.isContinuoslyTrack) {
+				const success = await this.trackThisFrame();
+
+				if (!success) {
+					this.isContinuoslyTrack = false;
+					break;
+				}
+
+				// Check if we're already at the last frame before seeking
+				if (this.currentFrame >= this.state.endFrame) {
+					this.isContinuoslyTrack = false;
+					break;
+				}
+
+				// Wait for the video to actually finish seeking before next track
+				await new Promise<void>((resolve) => {
+					this.video.addEventListener("seeked", () => resolve(), { once: true });
+					this.seekForward();
+				});
+			}
+
+			this.continuousTrack.classList.remove("active");
+		});
 
         this.bindScrubEvents();
 
@@ -165,7 +185,7 @@ class VideoManager {
 			const progress = currentTime / duration;
 			this.playhead.style.left = `${Math.min(Math.max(progress, 0), 1) * 100}%`;
 			this.timeDisplay.textContent = `${this.formatTime(currentTime)} / ${this.formatTime(this.state.duration)}`;
-			this.frameDisplay.textContent = `${this.currentFrame - this.state.startFrame + 1} / ${this.state.totalFrames - this.state.startFrame}`;
+			this.frameDisplay.textContent = `${this.currentFrame - this.state.startFrame + 1} / ${this.state.endFrame - this.state.startFrame + 1}`;
 		} else {
 			this.playhead.style.left = '0%';
 			this.timeDisplay.textContent = '0.00 / 0.00';
