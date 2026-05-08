@@ -23,16 +23,19 @@ class VideoManager {
 	
     private panZoom = new PanZoom(this.viewPort, this.container, this.video, [this.markOverlay]);
 	private readonly dotRadius = 3.5;
-
+	
 	private dontUpdatePlayhead = false;
+	private isContinuoslyTrack = false;
     private isScrubbing = false;
 	private wasPlayingBeforeScrub = false;
     
-	private prevFrame: any;
-	private autoForward: boolean = true;
-
     private state: VideoState;
     private selectedFrame = 0;
+
+	private prevFrame: any;
+	private prevMark: Point2D | null = null;
+	private prevFrameNumber = -1;
+	private autoForward: boolean = true;
 
 	get currentFrame(): number {return this.state.frameAtTime(this.video.currentTime);}
 
@@ -51,16 +54,23 @@ class VideoManager {
 			this.autoForwardBtn.classList.toggle("active", this.autoForward);
 		})
 
-		this.autoTrack.addEventListener("click", () => {
+		this.autoTrack.addEventListener("click", async () => {
 			this.pause();
-			this.trackThisFrame();
-			if (this.autoForward) this.seekForward();
+			const success = await this.trackThisFrame();
+			if (success && this.autoForward) this.seekForward();
 		})
 
-		this.continuousTrack.addEventListener("click", () => {
-			this.pause();
-			while (this.trackThisFrame()) {
-				this.seekForward();
+		this.continuousTrack.addEventListener("click", async () => {
+			if (this.isContinuoslyTrack) {
+				this.isContinuoslyTrack = false;
+			} else {
+				this.pause();
+				this.isContinuoslyTrack = true;
+				let success = await this.trackThisFrame();
+				while (success && this.isContinuoslyTrack) {
+					this.seekForward();
+					success = await this.trackThisFrame();
+				}
 			}
 		})
 
@@ -139,6 +149,9 @@ class VideoManager {
 		if (!this.state.hasVideo) return;
 		frame = Math.max(frame, this.state.startFrame);
 		frame = Math.min(frame, this.state.endFrame);
+		this.prevMark = this.state.targetMarks[this.currentFrame];
+		this.prevFrame = captureGrayFrame(this.video);
+		this.prevFrameNumber = this.currentFrame;
 		this.video.currentTime = this.state.timeAtFrame(frame);
 	}
 
@@ -260,15 +273,28 @@ class VideoManager {
 		this.drawMarks();
 	}
 
-	private trackThisFrame(): boolean {
-		const prevMark = this.state.targetMarks[this.currentFrame];
-		if (prevMark === null) {
+	private async trackThisFrame(): Promise<boolean> {
+		if (this.currentFrame != this.prevFrameNumber + 1) {
+			await new Promise<void>((resolve) => {
+				this.video.addEventListener("seeked", () => resolve(), { once: true });
+				this.seekToFrame(this.currentFrame - 1);
+			});
+
+			await new Promise<void>((resolve) => {
+				this.video.addEventListener("seeked", () => resolve(), { once: true });
+				this.seekToFrame(this.currentFrame + 1);
+			});
+		}
+
+		if (this.prevMark === null) {
 			alert("Please mark the previous frame"); 
 			return false;
 		}
+
 		const currFrame = captureGrayFrame(this.video);
-		const predicted = trackPoint(this.prevFrame, currFrame, prevMark);
+		const predicted = trackPoint(this.prevFrame, currFrame, this.prevMark);
 		currFrame.delete();
+
 		if (!predicted) {
 			alert("Track Failed");
 			return false;

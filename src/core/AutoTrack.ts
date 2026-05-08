@@ -1,4 +1,3 @@
-// src/core/AutoTrack.ts
 declare const cv: any;
 
 import { Point2D } from "./Types";
@@ -39,14 +38,6 @@ export function trackPoint(
 	const w = prevFrame.cols;
 	const h = prevFrame.rows;
 
-	const winSize = new cv.Size(21, 21);
-	const termCriteria = new cv.TermCriteria(
-		cv.TermCriteria_EPS + cv.TermCriteria_COUNT,
-		30,
-		0.01
-	);
-	const minConfidence = 0.01;
-
 	// Convert normalized point to pixel coordinates
 	const prevPts = cv.matFromArray(1, 1, cv.CV_32FC2, [
 		prevMark.x * w,
@@ -56,41 +47,32 @@ export function trackPoint(
 	const nextPts = new cv.Mat();
 	const status = new cv.Mat();
 	const err = new cv.Mat();
-	const minEigVals = new cv.Mat();
 
+	// opencv.js only exposes the 6-argument overload
 	cv.calcOpticalFlowPyrLK(
 		prevFrame,
 		currFrame,
 		prevPts,
 		nextPts,
 		status,
-		err,
-		winSize,
-		3,
-		termCriteria,
-		cv.OPTFLOW_LK_GET_MIN_EIGENVALS,
-		minConfidence,
-		minEigVals
+		err
 	);
 
 	const tracked = status.data[0] === 1;
-	const confidence = minEigVals.data32F[0];
 
 	let result: Point2D | null = null;
 
-	if (tracked && confidence >= minConfidence) {
+	if (tracked) {
 		result = new Point2D(
 			nextPts.data32F[0] / w,
 			nextPts.data32F[1] / h
 		);
 	}
 
-	// Free WASM heap — opencv.js has no GC
 	prevPts.delete();
 	nextPts.delete();
 	status.delete();
 	err.delete();
-	minEigVals.delete();
 
 	return result;
 }
