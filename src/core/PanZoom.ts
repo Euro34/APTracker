@@ -5,7 +5,7 @@ export class PanZoom {
 	private overlay: HTMLCanvasElement[];
 
     private needsTransform = false;
-    public readonly OVERLAY_SCALE = 4;
+    public readonly OVERLAY_SCALE = 3;
 	private zoom = 1;
 	private panX = 0;
 	private panY = 0;
