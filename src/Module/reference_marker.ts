@@ -588,26 +588,25 @@ class Ref3DWidget {
 }
 
 export class ReferenceMarker {
-	private cardA = document.getElementById("ref-corner-A") as HTMLDivElement;
-	private cardB = document.getElementById("ref-corner-B") as HTMLDivElement;
+	private stateA: VideoState;
+	private stateB: VideoState;
+	
+	private videoManager: VideoManager;
+	
+    private widget = new Ref3DWidget();
+	private cornerBtn = document.querySelectorAll<HTMLButtonElement>(".corner-btn");
+	
+	private refMarker = document.getElementById("ReferenceMarker") as HTMLDivElement;
+	private vidABtn = this.refMarker.querySelector("#vid-btn-a") as HTMLButtonElement;
+	private vidBBtn = this.refMarker.querySelector("#vid-btn-b") as HTMLButtonElement;
+	
+	private cardA = document.getElementById("target-A") as HTMLDivElement;
+	private cardB = document.getElementById("target-B") as HTMLDivElement;
 	private markedCountA = this.cardA.querySelector(".marked-count") as HTMLParagraphElement;
 	private markedCountB = this.cardB.querySelector(".marked-count") as HTMLParagraphElement;
 	private cornerStatusesA = this.cardA.querySelectorAll<HTMLDivElement>(".corner-status");
 	private cornerStatusesB = this.cardB.querySelectorAll<HTMLDivElement>(".corner-status");
-
-
-	private stateA: VideoState;
-	private stateB: VideoState;
-
-	private videoManager: VideoManager;
-
-    private widget = new Ref3DWidget();
-	private cornerBtn = document.querySelectorAll<HTMLButtonElement>(".corner-btn");
-
-	private refMarker = document.getElementById("ReferenceMarker") as HTMLDivElement;
-	private vidABtn = this.refMarker.querySelector("#vid-btn-a") as HTMLButtonElement;
-	private vidBBtn = this.refMarker.querySelector("#vid-btn-b") as HTMLButtonElement;
-
+	
     constructor(states:  VideoState[]) {
 		[this.stateA, this.stateB] = states;
 		this.videoManager = new VideoManager(this.stateA);

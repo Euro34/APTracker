@@ -12,6 +12,33 @@
     background-color: var(--link-border-color);
 }
 
+.card#TargetMarks .card-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 20px;
+}
+
+.card#TargetMarks .camera {
+	display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 15px;
+    border: 1px solid var(--border-color);
+    border-radius: 15px;
+    gap: 20px;
+}
+
+.card#TargetMarks .camera.done {
+	border-color: var(--success-color);
+}
+
+.card#TargetMarks .camera .head {
+	display: flex;
+	justify-content: space-between;
+	padding: 0 3px;
+}
+
 /* Target Marker */
 .TargetMarker {
     position: fixed;

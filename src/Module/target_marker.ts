@@ -336,6 +336,11 @@ export class TargetMarker {
 	private vidABtn = this.targetMarker.querySelector("#vid-btn-a") as HTMLButtonElement;
 	private vidBBtn = this.targetMarker.querySelector("#vid-btn-b") as HTMLButtonElement;
 
+	private cardA = document.getElementById("target-A") as HTMLDivElement;
+	private cardB = document.getElementById("target-B") as HTMLDivElement;
+	private markedCountA = this.cardA.querySelector(".marked-count") as HTMLParagraphElement;
+	private markedCountB = this.cardB.querySelector(".marked-count") as HTMLParagraphElement;
+
     constructor(states: VideoState[]) {
         [this.stateA, this.stateB] = states;
         this.videoManager = new VideoManager(this.stateA);
@@ -387,6 +392,21 @@ export class TargetMarker {
 	}
 
     private updateCard() {
+		const totalA = this.stateA.endFrame - this.stateA.startFrame + 1
+		const totalB = this.stateB.endFrame - this.stateB.startFrame + 1
+		const countA = this.stateA.targetMarks.filter(m => m !== null).length;
+		const countB = this.stateB.targetMarks.filter(m => m !== null).length;
+		this.markedCountA.textContent = `${countA}/${totalA} frame${countA !== 1 ? 's' : ''} marked`;
+		this.markedCountB.textContent = `${countB}/${totalB} frame${countB !== 1 ? 's' : ''} marked`;
 
+		this.cardA.classList.remove("done", "inprogress");
+		if (countA != 0) {
+			this.cardA.classList.add("done");
+		}
+
+		this.cardB.classList.remove("done", "inprogress");
+		if (countB != 0) {
+			this.cardB.classList.add("done");
+		}
     }
 }
