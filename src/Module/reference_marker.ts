@@ -600,8 +600,8 @@ export class ReferenceMarker {
 	private vidABtn = this.refMarker.querySelector("#vid-btn-a") as HTMLButtonElement;
 	private vidBBtn = this.refMarker.querySelector("#vid-btn-b") as HTMLButtonElement;
 	
-	private cardA = document.getElementById("target-A") as HTMLDivElement;
-	private cardB = document.getElementById("target-B") as HTMLDivElement;
+	private cardA = document.getElementById("ref-corner-A") as HTMLDivElement;
+	private cardB = document.getElementById("ref-corner-B") as HTMLDivElement;
 	private markedCountA = this.cardA.querySelector(".marked-count") as HTMLParagraphElement;
 	private markedCountB = this.cardB.querySelector(".marked-count") as HTMLParagraphElement;
 	private cornerStatusesA = this.cardA.querySelectorAll<HTMLDivElement>(".corner-status");

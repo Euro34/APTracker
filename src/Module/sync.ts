@@ -361,6 +361,7 @@ export class SyncEditor {
 		states.forEach(state => {
 			state.addEventListener("onImport", () => this.updateCard());
 			state.addEventListener("timestampsChange", () => this.updateCard());
+			state.addEventListener("onReset", () => this.updateCard());
 		})
 
 		document.getElementById("open-sync-editor")!.addEventListener("click", () => {

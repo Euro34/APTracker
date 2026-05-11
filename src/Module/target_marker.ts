@@ -347,7 +347,7 @@ export class TargetMarker {
         states.forEach(state => {
 			state.addEventListener("onUpload", () => { this.syncButtonStates(); this.selectVideo('a'); });
 			state.addEventListener("timestampsChange", () => this.videoManager.updateCurrentTime());
-			state.addEventListener("trimChange", () => this.videoManager.updateCurrentTime());
+			state.addEventListener("trimChange", () => { this.videoManager.updateCurrentTime(); this.updateCard(); });
 			state.addEventListener("onReset", () => { this.syncButtonStates(); this.selectVideo('a'); this.updateCard(); });
 			state.addEventListener("onImport", () => this.updateCard());
 		});
@@ -392,12 +392,21 @@ export class TargetMarker {
 	}
 
     private updateCard() {
-		const totalA = this.stateA.endFrame - this.stateA.startFrame + 1
-		const totalB = this.stateB.endFrame - this.stateB.startFrame + 1
-		const countA = this.stateA.targetMarks.filter(m => m !== null).length;
-		const countB = this.stateB.targetMarks.filter(m => m !== null).length;
-		this.markedCountA.textContent = `${countA}/${totalA} frame${countA !== 1 ? 's' : ''} marked`;
-		this.markedCountB.textContent = `${countB}/${totalB} frame${countB !== 1 ? 's' : ''} marked`;
+		const totalA = this.stateA.endFrame - this.stateA.startFrame + 1;
+		const totalB = this.stateB.endFrame - this.stateB.startFrame + 1;
+		const countA = this.stateA.targetMarks.slice(this.stateA.startFrame, this.stateA.endFrame + 1).filter(m => m !== null).length;
+		const countB = this.stateB.targetMarks.slice(this.stateB.startFrame, this.stateB.endFrame + 1).filter(m => m !== null).length;
+		
+		if (!Number.isNaN(this.stateA.startFrame) && !Number.isNaN(this.stateA.endFrame)) {
+			this.markedCountA.textContent = `${countA}/${totalA} frame${countA !== 1 ? 's' : ''} marked`;
+		} else {
+			this.markedCountA.textContent = `0/0 frames marked`;
+		}
+		if (!Number.isNaN(this.stateB.startFrame) && !Number.isNaN(this.stateB.endFrame)) {
+			this.markedCountB.textContent = `${countB}/${totalB} frame${countB !== 1 ? 's' : ''} marked`;
+		} else {
+			this.markedCountB.textContent = `0/0 frames marked`;
+		}
 
 		this.cardA.classList.remove("done", "inprogress");
 		if (countA != 0) {

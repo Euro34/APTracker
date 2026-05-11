@@ -97,6 +97,8 @@ class APTracker {
         } else {
             updateStatus("Sync", "");
         }
+        
+        this.updateTargetMarkerStatus();
     }
 
     public updateReferenceObject(width: number | null, length: number | null, height: number | null) {
@@ -140,7 +142,7 @@ class APTracker {
     private updateTargetMarkerStatus() {
         let markedFound = [false, false];
         this.states.forEach((state, index) => {
-            for (const mark of state.targetMarks) {
+            for (const mark of state.targetMarks.slice(state.startFrame, state.endFrame + 1)) {
                 if (mark !== null) {
                     markedFound[index] = true;
                     break;
