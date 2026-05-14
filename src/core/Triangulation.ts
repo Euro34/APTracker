@@ -1,8 +1,9 @@
 import { Point2D, Point3D } from "./Types";
+import { VideoState } from "./VideoState";
 import { ReferenceObject } from "./ReferenceObject";
 import { Matrix, SingularValueDecomposition } from "ml-matrix";
 
-function triangulate(p1: Point2D, p2: Point2D, P1: Matrix, P2: Matrix): Point3D {
+function triangulate(p1: Point2D, p2: Point2D, PM1: Matrix, PM2: Matrix): Point3D {
 	const buildRows = (p: Point2D, P: Matrix): number[][] => {
 		const x = p.x!;
 		const y = p.y!;
@@ -12,7 +13,7 @@ function triangulate(p1: Point2D, p2: Point2D, P1: Matrix, P2: Matrix): Point3D 
 		];
 	};
 
-	const rows = [...buildRows(p1, P1), ...buildRows(p2, P2)];
+	const rows = [...buildRows(p1, PM1), ...buildRows(p2, PM2)];
 	const A = new Matrix(rows);
 	const svd = new SingularValueDecomposition(A);
 	const V = svd.rightSingularVectors;
@@ -23,27 +24,75 @@ function triangulate(p1: Point2D, p2: Point2D, P1: Matrix, P2: Matrix): Point3D 
 	return new Point3D(lastCol[0] / w, lastCol[1] / w, lastCol[2] / w);
 }
 
-export function triangulateAll(
-	cam1CornerPoints: Array<Point2D | null>,
-	cam2CornerPoints: Array<Point2D | null>,
-	ref: ReferenceObject,
-	cam1TrackedPoints: Array<Point2D | null>,
-	cam2TrackedPoints: Array<Point2D | null>,
-): Array<Point3D | null> {
-	const P1 = ref.calculateProjectionMatrix(cam1CornerPoints);
-	const P2 = ref.calculateProjectionMatrix(cam2CornerPoints);
+// Returns interpolated Point2D at time t, given sorted marked frames.
+// Returns null if the two surrounding marks are farther apart than maxGapMs.
+function interpolatePoint(marks: (Point2D | null)[],timestamps: number[],startFrame: number,t: number,maxGapMs: number): Point2D | null {
+	// Build list of (time, point) for non-null marks only
+	const keyed: { t: number; p: Point2D }[] = [];
+	for (let i = 0; i < marks.length; i++) {
+		if (marks[i] !== null) {
+			keyed.push({ t: timestamps[i] - startFrame, p: marks[i]! });
+		}
+	}
 
-	const results: Array<Point3D | null> = [];
+	if (keyed.length === 0) return null;
 
-	const frameCount = Math.min(cam1TrackedPoints.length, cam2TrackedPoints.length);
-	for (let i = 0; i < frameCount; i++) {
-		const p1 = cam1TrackedPoints[i];
-		const p2 = cam2TrackedPoints[i];
+	// Find surrounding bracket
+	let lo = -1, hi = -1;
+	for (let i = 0; i < keyed.length - 1; i++) {
+		if (keyed[i].t <= t && keyed[i + 1].t >= t) {
+			lo = i;
+			hi = i + 1;
+			break;
+		}
+	}
+
+	// Exact match or out of range
+	if (lo === -1) {
+		const first = keyed[0];
+		const last = keyed[keyed.length - 1];
+		if (Math.abs(t - first.t) < 1e-9) return first.p;
+		if (Math.abs(t - last.t) < 1e-9) return last.p;
+		return null; // t is outside the marked range entirely
+	}
+
+	const dt = keyed[hi].t - keyed[lo].t;
+	if (dt > maxGapMs) return null; // gap too large — don't fabricate
+
+	const alpha = (t - keyed[lo].t) / dt;
+	return new Point2D(
+		keyed[lo].p.x! + alpha * (keyed[hi].p.x! - keyed[lo].p.x!),
+		keyed[lo].p.y! + alpha * (keyed[hi].p.y! - keyed[lo].p.y!),
+	);
+}
+
+export function triangulateAll(videoStates: [VideoState, VideoState], referenceObject: ReferenceObject): (Point3D | null)[] {
+	const [s1, s2] = videoStates;
+
+	const PM1 = referenceObject.calculateProjectionMatrix(s1.referenceMarks);
+	const PM2 = referenceObject.calculateProjectionMatrix(s2.referenceMarks);
+
+	const fps1 = s1.frameTimestamps.length / (s1.frameTimestamps[s1.frameTimestamps.length - 1] - s1.frameTimestamps[0]);
+	const fps2 = s2.frameTimestamps.length / (s2.frameTimestamps[s2.frameTimestamps.length - 1] - s2.frameTimestamps[0]);
+	const master = fps1 <= fps2 ? s1 : s2;
+
+	const slowInterval = 1000 / Math.min(fps1, fps2);
+	const maxGapMs = slowInterval * 1.5;
+
+	const results: (Point3D | null)[] = [];
+
+	for (let i = 0; i < master.targetMarks.length; i++) {
+		const t = master.frameTimestamps[i] - master.startFrame;
+
+		const p1 = interpolatePoint(s1.targetMarks, s1.frameTimestamps, s1.startFrame, t, maxGapMs);
+		const p2 = interpolatePoint(s2.targetMarks, s2.frameTimestamps, s2.startFrame, t, maxGapMs);
+
 		if (p1 === null || p2 === null) {
 			results.push(null);
 			continue;
 		}
-		results.push(triangulate(p1, p2, P1, P2));
+
+		results.push(triangulate(p1, p2, PM1, PM2));
 	}
 
 	return results;
