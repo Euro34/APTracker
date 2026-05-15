@@ -26,7 +26,7 @@ function triangulate(p1: Point2D, p2: Point2D, PM1: Matrix, PM2: Matrix): Point3
 
 // Returns interpolated Point2D at time t, given sorted marked frames.
 // Returns null if the two surrounding marks are farther apart than maxGapMs.
-function interpolatePoint(marks: (Point2D | null)[],timestamps: number[],startFrame: number,t: number,maxGapMs: number): Point2D | null {
+function interpolatePoint(marks: (Point2D | null)[], timestamps: number[], startFrame: number,t: number, maxGapMs: number): Point2D | null {
 	// Build list of (time, point) for non-null marks only
 	const keyed: { t: number; p: Point2D }[] = [];
 	for (let i = 0; i < marks.length; i++) {
@@ -57,7 +57,7 @@ function interpolatePoint(marks: (Point2D | null)[],timestamps: number[],startFr
 	}
 
 	const dt = keyed[hi].t - keyed[lo].t;
-	if (dt > maxGapMs) return null; // gap too large — don't fabricate
+	if (dt > maxGapMs) return null; // gap too large
 
 	const alpha = (t - keyed[lo].t) / dt;
 	return new Point2D(
